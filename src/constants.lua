@@ -1,0 +1,30 @@
+--[[
+    constants
+]]
+
+-- physical screen dimensions
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720
+
+-- virtual resolution dimensions
+VIRTUAL_WIDTH = 640
+VIRTUAL_HEIGHT = 360
+
+-- board offsets
+BOARD_OFFSET_X = 192
+BOARD_OFFSET_Y = 52
+
+-- piece indexes
+WHITE_PAWN = 15
+WHITE_ROOK = 14
+WHITE_KNIGHT = 13
+WHITE_BISHOP = 7
+WHITE_QUEEN = 6
+WHITE_KING = 5
+
+BLACK_PAWN = 11
+BLACK_ROOK = 10
+BLACK_KNIGHT = 9
+BLACK_BISHOP = 3
+BLACK_QUEEN = 2
+BLACK_KING = 1
