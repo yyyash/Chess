@@ -50,3 +50,9 @@ gFrames = {
     ['top_border'] = love.graphics.newQuad(16, 160, 64, 16, gTextures['assets']:getDimensions()),
     ['bottom_border'] = love.graphics.newQuad(16, 240, 64, 16, gTextures['assets']:getDimensions())
 }
+
+gFonts = {
+    ['small'] = love.graphics.newFont('fonts/gelian.ttf', 8),
+    ['medium'] = love.graphics.newFont('fonts/gelian.ttf', 16),
+    ['large'] = love.graphics.newFont('fonts/gelian.ttf', 32)
+}
