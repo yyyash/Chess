@@ -99,48 +99,66 @@ end
 --[[
     start with all 8 possible moves for knight in middle of board
     remove moves that are out of bounds
-    check if there is a same color piece for each possible move
-    if yes, remove that from the possible moves
+    remove moves that land on same color pieces
     return possible moves table
 ]]
 function Board:knightLegalMoves(piece)
+    local legalMoves = {}
     local possibleMoves = { 
         
         -- 8 possible moves for knight
         -- right and left by 1, up and down by 2
-        ['r1d2'] = { piece.gridX + 1, piece.gridY + 2},
-        ['l1d2'] = { piece.gridX - 1, piece.gridY + 2},
-        ['r1u2'] = { piece.gridX + 1, piece.gridY - 2},
-        ['l1u2'] = { piece.gridX - 1, piece.gridY - 2},
+        { piece.gridX + 1, piece.gridY + 2},
+        { piece.gridX - 1, piece.gridY + 2},
+        { piece.gridX + 1, piece.gridY - 2},
+        { piece.gridX - 1, piece.gridY - 2},
 
         -- right and left by 2, up and down by 1
-        ['r2d1'] = { piece.gridX + 2, piece.gridY + 1},
-        ['l2d1'] = { piece.gridX - 2, piece.gridY + 1},
-        ['r2u1'] = { piece.gridX + 2, piece.gridY - 1},
-        ['l2u1'] = { piece.gridX - 2, piece.gridY - 1}
+        { piece.gridX + 2, piece.gridY + 1},
+        { piece.gridX - 2, piece.gridY + 1},
+        { piece.gridX + 2, piece.gridY - 1},
+        { piece.gridX - 2, piece.gridY - 1}
     }
 
-    -- remove moves that are out of bounds
-    for k, move in pairs(possibleMoves) do
-        if move[1] > 8 or move[1] < 1 or move[2] > 8 or move[2] < 1 then
-            table.remove(possibleMoves, move)
+    -- set flag[3] to true if in bounds
+    for i = 1, #possibleMoves do
+        if possibleMoves[i][1] <= 8 and
+            possibleMoves[i][1] >= 1 and 
+            possibleMoves[i][2] <= 8 and
+            possibleMoves[i][2] >= 1 then
+                -- true for in bounds
+                table.insert(possibleMoves[i], true)
+        else
+        -- false if move is not in bounds
+            table.insert(possibleMoves[i], false)
         end
     end
 
-    -- remove moves that land on same color piece
-    -- for ever move that is left in possible moves
-    -- check if any same color pieces are there
-    -- if yes, remnove from possible moves table
-    for k, move in pairs(possibleMoves) do
-        for i = 1, #self.pieces do
-            if self.pieces[i].gridX == move[1] and self.pieces[i].gridY == move[2] and 
-                self.pieces[i].color == piece.color then
-                    table.remove(possibleMoves, move)
-                end
+    -- check for same color piece, set flag[4] to true if same color
+    -- for all possible moves
+    for i = 1, #possibleMoves do
+        -- for all pieces on the board
+        for j = 1, #self.pieces do
+            -- check if there is same color piece that would invalidate the move
+            if self.pieces[j].gridX == possibleMoves[i][1] and self.pieces[j].gridY == possibleMoves[i][2] and self.pieces[j].color == piece.color then
+                table.insert(possibleMoves[i], false)
+                break
             end
+            -- no piece found or different color piece found --> continue looping through pieces
         end
-    -- if its in bounds and not the same piece, its a legal move
-    return possibleMoves
+        -- if we made it here we didn't find any piece or its a different color piece
+        table.insert(possibleMoves[i], true)
+    end
+    
+    -- return only the legal moves
+    for i = 1, #possibleMoves do
+        if possibleMoves[i][3] == true and possibleMoves[i][4] == true then
+            table.insert(legalMoves, possibleMoves[i])            
+        end
+    end
+
+    -- if its in bounds and not the same piece, its a legal move ]]
+    return legalMoves
 end
 
 --[[
@@ -153,6 +171,7 @@ function Board:selectPiece(x, y)
     for i = 1, #self.pieces do
         if self.pieces[i].gridX == x and self.pieces[i].gridY == y then
             self.pieces[i].isSelected = true
+            return self.pieces[i]
         end
     end
 end

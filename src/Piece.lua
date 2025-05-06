@@ -17,8 +17,8 @@ function Piece:init(x, y, color, pieceType, tileID)
     self.tileID = tileID
 
     -- coordinate positions
-    self.x = (self.gridX - 1) * 32 + BOARD_OFFSET_X
-    self.y = (self.gridY - 1) * 32 + BOARD_OFFSET_Y
+    self.x = (self.gridX - 1) * TILE_SIZE + BOARD_OFFSET_X
+    self.y = (self.gridY - 1) * TILE_SIZE + BOARD_OFFSET_Y
 end
 
 function Piece:render()
@@ -31,4 +31,12 @@ function Piece:render()
     end
     -- draw piece
     love.graphics.draw(gTextures['assets'], gFrames['pieces'][self.tileID], self.x, self.y)
+end
+
+-- changes the pieces gridX, gridY, and coordinate x, y to match
+function Piece:moveTo(x, y)
+    self.gridX = x
+    self.gridY = y
+    self.x = (self.gridX - 1) * TILE_SIZE + BOARD_OFFSET_X
+    self.y = (self.gridY - 1) * TILE_SIZE + BOARD_OFFSET_Y
 end
