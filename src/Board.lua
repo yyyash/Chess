@@ -97,23 +97,19 @@ function Board:render()
 end
 
 --[[
-    start with all 8 possible moves for knight in middle of board
-    remove moves that are out of bounds
-    remove moves that land on same color pieces
-    return possible moves table
+    start with all 8 possible moves for knight
+    eliminate moves that are out of bounds and land on same color pieces
+    return table of legal moves
 ]]
 function Board:knightLegalMoves(piece)
     local legalMoves = {}
     local possibleMoves = { 
         
         -- 8 possible moves for knight
-        -- right and left by 1, up and down by 2
         { piece.gridX + 1, piece.gridY + 2},
         { piece.gridX - 1, piece.gridY + 2},
         { piece.gridX + 1, piece.gridY - 2},
         { piece.gridX - 1, piece.gridY - 2},
-
-        -- right and left by 2, up and down by 1
         { piece.gridX + 2, piece.gridY + 1},
         { piece.gridX - 2, piece.gridY + 1},
         { piece.gridX + 2, piece.gridY - 1},
@@ -196,5 +192,35 @@ function Board:pieceColor(x, y)
         if self.pieces[i].gridX == x and self.pieces[i].gridY == y then
             return self.pieces[i].color
         end
+    end
+end
+
+--[[
+    returns true if gridX, gridY is an empty square
+]]
+function Board:emptySquare(x, y)
+    for i = 1, #self.pieces do
+        if self.pieces[i].gridX == x and self.pieces[i].gridY == y then
+            return false
+        end
+    end
+    -- if we made it here, there are no pieces on that x, y
+    return true
+end
+
+--[[
+    take piece at gridX, gridY
+]]
+function Board:takePiece(x, y)
+    -- find the index of the piece being taken
+    local pieceIndex = nil
+    for i = 1, #self.pieces do
+        if self.pieces[i].gridX == x and self.pieces[i].gridY == y then
+            pieceIndex = i
+        end
+    end
+    -- remove the piece at that index
+    if pieceIndex ~= nil then
+        table.remove(self.pieces, pieceIndex)
     end
 end

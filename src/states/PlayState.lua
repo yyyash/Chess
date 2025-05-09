@@ -61,6 +61,11 @@ function PlayState:update(dt)
             for i = 1, #self.legalMoves do
                 if self.selectedGridX == self.legalMoves[i][1] and self.selectedGridY == self.legalMoves[i][2] then
                     -- clicked on a legal move
+                    -- if there is a piece on this square, take it
+                    if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false then
+                        self.board:takePiece(self.selectedGridX, self.selectedGridY)
+                    end
+
                     -- move the piece to the selected square
                     for i = 1, #self.board.pieces do
                         if self.board.pieces[i].isSelected then
