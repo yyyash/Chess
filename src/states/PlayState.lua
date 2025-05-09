@@ -49,34 +49,33 @@ function PlayState:update(dt)
 
     -- take piece if legal move chosen matched with opponent's piece
     else
-        -- if we selected a knight
-        if self.selectedPiece.pieceType == 'knight' then
-            self.legalMoves = self.board:knightLegalMoves(self.selectedPiece)
-        end
+        -- calculate legal moves for selected piece
+        self.legalMoves = self.board:legalMoves(self.selectedPiece)
 
         -- mouse was clicked while we have a piece selected
         if love.mouse.wasPressed(1) then
             -- check if we clicked on a legalMove
             self.selectedGridX, self.selectedGridY = self:clickToGrid(love.mouse.x, love.mouse.y)
-            for i = 1, #self.legalMoves do
-                if self.selectedGridX == self.legalMoves[i][1] and self.selectedGridY == self.legalMoves[i][2] then
-                    -- clicked on a legal move
-                    -- if there is a piece on this square, take it
-                    if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false then
-                        self.board:takePiece(self.selectedGridX, self.selectedGridY)
-                    end
+            if self.legalMoves ~= nil then
+                for i = 1, #self.legalMoves do
+                    if self.selectedGridX == self.legalMoves[i]['gridX'] and self.selectedGridY == self.legalMoves[i]['gridY'] then
+                        -- clicked on a legal move
+                        -- if there is a piece on this square, take it
+                        if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false then
+                            self.board:takePiece(self.selectedGridX, self.selectedGridY)
+                        end
 
-                    -- move the piece to the selected square
-                    for i = 1, #self.board.pieces do
-                        if self.board.pieces[i].isSelected then
-                            self.board.pieces[i]:moveTo(self.selectedGridX, self.selectedGridY)
-                            -- change turns since we just moved
-                            self:changeTurns()
+                        -- move the piece to the selected square
+                        for i = 1, #self.board.pieces do
+                            if self.board.pieces[i].isSelected then
+                                self.board.pieces[i]:moveTo(self.selectedGridX, self.selectedGridY)
+                                -- change turns since we just moved
+                                self:changeTurns()
+                            end
                         end
                     end
                 end
             end
-
             -- reset selected piece and legal moves
             self.board:deselectPiece()
             self.selectedPiece = nil
@@ -88,14 +87,15 @@ end
 function PlayState:render()
     -- draw board
     self.board:render()
-
-    -- render legal move indicators
-    for i = 1, #self.legalMoves do
-        love.graphics.setColor(0, 247/255, 0, .8)
-        love.graphics.circle('fill', 
-            (self.legalMoves[i][1] - 1) * TILE_SIZE + BOARD_OFFSET_X + (TILE_SIZE/2), 
-            (self.legalMoves[i][2] - 1) * TILE_SIZE + BOARD_OFFSET_Y + (TILE_SIZE/2), 
-            6)
+    if self.legalMoves ~= nil then
+        -- render legal move indicators
+        for i = 1, #self.legalMoves do
+            love.graphics.setColor(0, 247/255, 0, .8)
+            love.graphics.circle('fill', 
+                (self.legalMoves[i]['gridX'] - 1) * TILE_SIZE + BOARD_OFFSET_X + (TILE_SIZE/2), 
+                (self.legalMoves[i]['gridY'] - 1) * TILE_SIZE + BOARD_OFFSET_Y + (TILE_SIZE/2), 
+                6)
+        end
     end
 end
 

@@ -97,64 +97,32 @@ function Board:render()
 end
 
 --[[
-    start with all 8 possible moves for knight
-    eliminate moves that are out of bounds and land on same color pieces
-    return table of legal moves
+    -- fill a table with legal moves and return it
 ]]
-function Board:knightLegalMoves(piece)
+function Board:legalMoves(piece)
     local legalMoves = {}
-    local possibleMoves = { 
-        
-        -- 8 possible moves for knight
-        { piece.gridX + 1, piece.gridY + 2},
-        { piece.gridX - 1, piece.gridY + 2},
-        { piece.gridX + 1, piece.gridY - 2},
-        { piece.gridX - 1, piece.gridY - 2},
-        { piece.gridX + 2, piece.gridY + 1},
-        { piece.gridX - 2, piece.gridY + 1},
-        { piece.gridX + 2, piece.gridY - 1},
-        { piece.gridX - 2, piece.gridY - 1}
-    }
-
-    -- set flag[3] to true if in bounds
-    for i = 1, #possibleMoves do
-        if possibleMoves[i][1] <= 8 and
-            possibleMoves[i][1] >= 1 and 
-            possibleMoves[i][2] <= 8 and
-            possibleMoves[i][2] >= 1 then
-                -- true for in bounds
-                table.insert(possibleMoves[i], true)
-        else
-        -- false if move is not in bounds
-            table.insert(possibleMoves[i], false)
-        end
-    end
-
-    -- check for same color piece, set flag[4] to true if same color
-    -- for all possible moves
-    for i = 1, #possibleMoves do
-        -- for all pieces on the board
-        for j = 1, #self.pieces do
-            -- check if there is same color piece that would invalidate the move
-            if self.pieces[j].gridX == possibleMoves[i][1] and self.pieces[j].gridY == possibleMoves[i][2] and self.pieces[j].color == piece.color then
-                table.insert(possibleMoves[i], false)
-                break
+    -- possible knight moves
+    if piece.pieceType == 'knight' then
+        local possibleMoves = { 
+            -- 8 possible moves for knight
+            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 2},
+            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 2},
+            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 2},
+            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 2},
+            { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY + 1},
+            { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY + 1},
+            { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY - 1},
+            { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY - 1}
+        }
+        -- only include moves that are inbounds and land on an opposite color piece or an empty square
+        for i = 1, #possibleMoves do
+            if self:gridInBounds(possibleMoves[i]['gridX'], possibleMoves[i]['gridY']) and 
+                self:oppColorOrEmpty(possibleMoves[i]['gridX'], possibleMoves[i]['gridY'], piece) then
+                    table.insert(legalMoves, possibleMoves[i])
             end
-            -- no piece found or different color piece found --> continue looping through pieces
         end
-        -- if we made it here we didn't find any piece or its a different color piece
-        table.insert(possibleMoves[i], true)
+        return legalMoves
     end
-    
-    -- return only the legal moves
-    for i = 1, #possibleMoves do
-        if possibleMoves[i][3] == true and possibleMoves[i][4] == true then
-            table.insert(legalMoves, possibleMoves[i])            
-        end
-    end
-
-    -- if its in bounds and not the same piece, its a legal move ]]
-    return legalMoves
 end
 
 --[[
@@ -196,6 +164,17 @@ function Board:pieceColor(x, y)
 end
 
 --[[
+    returns the piece type at a grid X, grid Y position
+]]
+function Board:pieceType(x, y)
+    for i = 1, #self.pieces do
+        if self.pieces[i].gridX == x and self.pieces[i].gridY == y then
+            return self.pieces[i].pieceType
+        end
+    end
+end
+
+--[[
     returns true if gridX, gridY is an empty square
 ]]
 function Board:emptySquare(x, y)
@@ -223,4 +202,28 @@ function Board:takePiece(x, y)
     if pieceIndex ~= nil then
         table.remove(self.pieces, pieceIndex)
     end
+end
+
+--[[
+    returns true if grid X, grid Y is in bounds
+]]
+function Board:gridInBounds(x, y)
+    if x > 8 or x < 1 or y > 8 or y < 1 then
+        return false
+    else
+        return true
+    end
+end
+
+--[[
+    returns true if there is an opposite color piece or no piece at position X, Y
+]]
+function Board:oppColorOrEmpty(x, y, piece)
+    for i = 1, #self.pieces do
+        if self.pieces[i].gridX == x and self.pieces[i].gridY == y and self.pieces[i].color == piece.color then
+            return false
+        end
+    end
+    -- if we made it here, there is either no piece, or a same color piece
+    return true
 end
