@@ -13,49 +13,49 @@ function Board:init()
 
     -- white pawns
     for i = 1, 8 do
-        table.insert(self.pieces, Piece(i, 7, 'white', 'pawn', WHITE_PAWN))     
+        table.insert(self.pieces, Piece(i, 7, 'white', 'pawn', WHITE_PAWN, 1))     
     end
 
     -- white rooks
-    table.insert(self.pieces, Piece(1, 8, 'white', 'rook', WHITE_ROOK))
-    table.insert(self.pieces, Piece(8, 8, 'white', 'rook', WHITE_ROOK))
+    table.insert(self.pieces, Piece(1, 8, 'white', 'rook', WHITE_ROOK, 1))
+    table.insert(self.pieces, Piece(8, 8, 'white', 'rook', WHITE_ROOK, 1))
 
     -- white knights
-    table.insert(self.pieces, Piece(2, 8, 'white', 'knight', WHITE_KNIGHT))
-    table.insert(self.pieces, Piece(7, 8, 'white', 'knight', WHITE_KNIGHT))
+    table.insert(self.pieces, Piece(2, 8, 'white', 'knight', WHITE_KNIGHT, 1))
+    table.insert(self.pieces, Piece(7, 8, 'white', 'knight', WHITE_KNIGHT, 1))
 
     -- white bishops
-    table.insert(self.pieces, Piece(3, 8, 'white', 'bishop', WHITE_BISHOP))
-    table.insert(self.pieces, Piece(6, 8, 'white', 'bishop', WHITE_BISHOP))
+    table.insert(self.pieces, Piece(3, 8, 'white', 'bishop', WHITE_BISHOP, 1))
+    table.insert(self.pieces, Piece(6, 8, 'white', 'bishop', WHITE_BISHOP, 1))
 
     -- white queen
-    table.insert(self.pieces, Piece(4, 8, 'white', 'queen', WHITE_QUEEN))
+    table.insert(self.pieces, Piece(4, 8, 'white', 'queen', WHITE_QUEEN, 1))
 
     -- white king
-    table.insert(self.pieces, Piece(5, 8, 'white', 'king', WHITE_KING))
+    table.insert(self.pieces, Piece(5, 8, 'white', 'king', WHITE_KING, 1))
 
     -- black pawns
     for i = 1, 8 do
-        table.insert(self.pieces, Piece(i, 2, 'black', 'pawn', BLACK_PAWN))     
+        table.insert(self.pieces, Piece(i, 2, 'black', 'pawn', BLACK_PAWN, 2))     
     end
 
     -- black rooks
-    table.insert(self.pieces, Piece(1, 1, 'black', 'rook', BLACK_ROOK))
-    table.insert(self.pieces, Piece(8, 1, 'black', 'rook', BLACK_ROOK))
+    table.insert(self.pieces, Piece(1, 1, 'black', 'rook', BLACK_ROOK, 2))
+    table.insert(self.pieces, Piece(8, 1, 'black', 'rook', BLACK_ROOK, 2))
 
     -- black knights
-    table.insert(self.pieces, Piece(2, 1, 'black', 'knight', BLACK_KNIGHT))
-    table.insert(self.pieces, Piece(7, 1, 'black', 'knight', BLACK_KNIGHT))
+    table.insert(self.pieces, Piece(2, 1, 'black', 'knight', BLACK_KNIGHT, 2))
+    table.insert(self.pieces, Piece(7, 1, 'black', 'knight', BLACK_KNIGHT, 2))
 
     -- black bishops
-    table.insert(self.pieces, Piece(3, 1, 'black', 'bishop', BLACK_BISHOP))
-    table.insert(self.pieces, Piece(6, 1, 'black', 'bishop', BLACK_BISHOP))
+    table.insert(self.pieces, Piece(3, 1, 'black', 'bishop', BLACK_BISHOP, 2))
+    table.insert(self.pieces, Piece(6, 1, 'black', 'bishop', BLACK_BISHOP, 2))
 
     -- black queen
-    table.insert(self.pieces, Piece(4, 1, 'black', 'queen', BLACK_QUEEN))
+    table.insert(self.pieces, Piece(4, 1, 'black', 'queen', BLACK_QUEEN, 2))
 
     -- black king
-    table.insert(self.pieces, Piece(5, 1, 'black', 'king', BLACK_KING))
+    table.insert(self.pieces, Piece(5, 1, 'black', 'king', BLACK_KING, 2))
     
 end
 
@@ -101,9 +101,10 @@ end
 ]]
 function Board:legalMoves(piece)
     local legalMoves = {}
+    local possibleMoves = {}
     -- possible knight moves
     if piece.pieceType == 'knight' then
-        local possibleMoves = { 
+        possibleMoves = { 
             -- 8 possible moves for knight
             { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 2},
             { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 2},
@@ -117,10 +118,50 @@ function Board:legalMoves(piece)
         -- only include moves that are inbounds and land on an opposite color piece or an empty square
         for i = 1, #possibleMoves do
             if self:gridInBounds(possibleMoves[i]['gridX'], possibleMoves[i]['gridY']) and 
-                self:oppColorOrEmpty(possibleMoves[i]['gridX'], possibleMoves[i]['gridY'], piece) then
+                (self:oppColor(possibleMoves[i]['gridX'], possibleMoves[i]['gridY'], piece) or self:emptySquare(possibleMoves[i]['gridX'], possibleMoves[i]['gridY'])) then
                     table.insert(legalMoves, possibleMoves[i])
             end
         end
+
+        return legalMoves
+
+    elseif piece.pieceType == 'pawn' then
+        -- player 1 can only move -y
+        if piece.player == 1 then
+            -- 4 possible moves for pawn
+            possibleMoves = {
+                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1},
+                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 2},
+                { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1},
+                { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1}
+            }
+        -- player 2 can only move +y
+        else
+            -- 4 possible moves for pawn
+            possibleMoves = {
+                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1},
+                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 2},
+                { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1},
+                { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1}
+            }
+        end
+        -- check if first forward move has an empty space and it is in bounds
+        if self:emptySquare(possibleMoves[1]['gridX'], possibleMoves[1]['gridY']) and self:gridInBounds(possibleMoves[1]['gridX'], possibleMoves[1]['gridY']) then
+            table.insert(legalMoves, possibleMoves[1])
+            -- check if the second forward move has an empty space, is in bounds, and its the first move
+            if self:emptySquare(possibleMoves[2]['gridX'], possibleMoves[2]['gridY']) and self:gridInBounds(possibleMoves[2]['gridX'], possibleMoves[2]['gridY']) and piece.firstMove then
+                table.insert(legalMoves, possibleMoves[2])
+            end
+        end
+        -- check conditions for diagonal moves
+        -- needs to be an opposite color piece on the diagonals
+        -- en passant conditions go in here too eventually
+        for i = 3, 4 do
+            if self:oppColor(possibleMoves[i]['gridX'], possibleMoves[i]['gridY'], piece) then
+                table.insert(legalMoves, possibleMoves[i])
+            end
+        end
+        
         return legalMoves
     end
 end
@@ -216,14 +257,14 @@ function Board:gridInBounds(x, y)
 end
 
 --[[
-    returns true if there is an opposite color piece or no piece at position X, Y
+    returns true if there is an opposite color piece at position X, Y
 ]]
-function Board:oppColorOrEmpty(x, y, piece)
+function Board:oppColor(x, y, piece)
     for i = 1, #self.pieces do
-        if self.pieces[i].gridX == x and self.pieces[i].gridY == y and self.pieces[i].color == piece.color then
-            return false
+        if self.pieces[i].gridX == x and self.pieces[i].gridY == y and self.pieces[i].color ~= piece.color then
+            return true
         end
     end
     -- if we made it here, there is either no piece, or a same color piece
-    return true
+    return false
 end

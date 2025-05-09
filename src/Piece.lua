@@ -5,7 +5,7 @@
 
 Piece = Class{}
 
-function Piece:init(x, y, color, pieceType, tileID)
+function Piece:init(x, y, color, pieceType, tileID, player)
     -- board positions
     self.gridX = x
     self.gridY = y
@@ -15,6 +15,12 @@ function Piece:init(x, y, color, pieceType, tileID)
     self.color = color
     self.pieceType = pieceType
     self.tileID = tileID
+    self.player = player
+    -- pawns, kings, and rooks
+    self.firstMove = true
+    -- pawns only
+    self.enPassant = false
+    self.takenByEnPassant = false
 
     -- coordinate positions
     self.x = (self.gridX - 1) * TILE_SIZE + BOARD_OFFSET_X
@@ -39,4 +45,8 @@ function Piece:moveTo(x, y)
     self.gridY = y
     self.x = (self.gridX - 1) * TILE_SIZE + BOARD_OFFSET_X
     self.y = (self.gridY - 1) * TILE_SIZE + BOARD_OFFSET_Y
+    -- turn firstMove flag off
+    if self.firstMove == true then
+        self.firstMove = false
+    end
 end
