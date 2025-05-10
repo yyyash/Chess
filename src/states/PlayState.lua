@@ -63,12 +63,28 @@ function PlayState:update(dt)
                         -- if there is a piece on this square, take it
                         if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false then
                             self.board:takePiece(self.selectedGridX, self.selectedGridY)
+                        -- set the enPassantFlag if pawn first moved to an adjecent enemy pawn
+                        elseif self.legalMoves[i]['triggersEnPassant'] then
+                            self.board:setEnPassant(self.selectedPiece)
                         end
-
+                        -- take the pawn by en passant
+                        if self.legalMoves[i]['enPassantTake'] then
+                            -- check if en passant piece is above
+                            if self.board:checkEnPassant(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] + 1) then
+                                self.board:takePiece(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] + 1)
+                            -- check if en passant piece is below
+                            elseif self.board:checkEnPassant(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] - 1) then
+                                self.board:takePiece(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] -1)
+                            end
+                        end
                         -- move the piece to the selected square
                         for i = 1, #self.board.pieces do
                             if self.board.pieces[i].isSelected then
                                 self.board.pieces[i]:moveTo(self.selectedGridX, self.selectedGridY)
+                                -- if player 1 just moved and player 2 had an enPassant pawn, reset the enPassant flag
+                                if self.board:enPassantColor() ~= nil and self.board:enPassantColor() ~= self.turn then
+                                    self.board:resetEnPassant()
+                                end
                                 -- change turns since we just moved
                                 self:changeTurns()
                             end

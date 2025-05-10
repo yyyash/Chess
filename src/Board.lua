@@ -128,21 +128,21 @@ function Board:legalMoves(piece)
     elseif piece.pieceType == 'pawn' then
         -- player 1 can only move -y
         if piece.player == 1 then
-            -- 4 possible moves for pawn
+            -- 4 possible moves for bottom pawns
             possibleMoves = {
-                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1},
-                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 2},
-                { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1},
-                { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1}
+                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
+                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
+                { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
+                { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false}
             }
         -- player 2 can only move +y
         else
-            -- 4 possible moves for pawn
+            -- 4 possible moves for top pawns
             possibleMoves = {
-                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1},
-                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 2},
-                { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1},
-                { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1}
+                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
+                { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
+                { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
+                { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false}
             }
         end
         -- check if first forward move has an empty space and it is in bounds
@@ -151,14 +151,44 @@ function Board:legalMoves(piece)
             -- check if the second forward move has an empty space, is in bounds, and its the first move
             if self:emptySquare(possibleMoves[2]['gridX'], possibleMoves[2]['gridY']) and self:gridInBounds(possibleMoves[2]['gridX'], possibleMoves[2]['gridY']) and piece.firstMove then
                 table.insert(legalMoves, possibleMoves[2])
+                -- check if this move would set the en passant flag
+                -- if the first move was used to skip over a square attacked by an opponent's pawn, this triggers en passant
+                -- so if we first move to a spot that has an enemy pawn to the left or right, we trigger en passant
+                
+                -- check left
+                if self:oppColor(possibleMoves[2]['gridX'] - 1, possibleMoves[2]['gridY'], piece) and self:pieceType(possibleMoves[2]['gridX'] - 1, possibleMoves[2]['gridY']) == 'pawn' then
+                -- set flag so that playstate can check and set en passant if this move is chosen
+                    legalMoves[2]['triggersEnPassant'] = true
+                -- check right
+                elseif self:oppColor(possibleMoves[2]['gridX'] + 1, possibleMoves[2]['gridY'], piece) and self:pieceType(possibleMoves[2]['gridX'] + 1, possibleMoves[2]['gridY']) == 'pawn' then
+                    legalMoves[2]['triggersEnPassant'] = true
+                end
             end
         end
         -- check conditions for diagonal moves
         -- needs to be an opposite color piece on the diagonals
         -- en passant conditions go in here too eventually
         for i = 3, 4 do
+            -- if the diagonal squares have an opposite color piece, its a legal move
             if self:oppColor(possibleMoves[i]['gridX'], possibleMoves[i]['gridY'], piece) then
                 table.insert(legalMoves, possibleMoves[i])
+            -- if the diagonal squares are empty, check for en passant
+            elseif self:emptySquare(possibleMoves[i]['gridX'], possibleMoves[i]['gridY']) then
+                -- check to the left for en passant flagged pawn
+                -- i = 4 is the left diagonal move
+                -- only add this to the legal moves table for the left diagonal move
+                if self:checkEnPassant(piece.gridX - 1, piece.gridY) and i == 4 then
+                    --add a flag to the legal move so that playstate can check to take the piece
+                    possibleMoves[i]['enPassantTake'] = true
+                    table.insert(legalMoves, possibleMoves[i])
+                -- check to the right for en passant flagged pawn
+                -- i = 3 is the right diagonal move
+                -- only add this to the legal moves table for the right diagonal move
+                elseif self:checkEnPassant(piece.gridX + 1, piece.gridY) and i == 3 then
+                    --add a flag to the legal move so that playstate can check to take the piece
+                    possibleMoves[i]['enPassantTake'] = true
+                    table.insert(legalMoves, possibleMoves[i])
+                end
             end
         end
         
@@ -267,4 +297,50 @@ function Board:oppColor(x, y, piece)
     end
     -- if we made it here, there is either no piece, or a same color piece
     return false
+end
+
+--[[
+    returns true if there is an en passant flagged pawn at a gridX, gridY position
+]]
+function Board:checkEnPassant(x, y)
+    for i = 1, #self.pieces do
+        if self.pieces[i].gridX == x and self.pieces[i].gridY == y and self.pieces[i].enPassant then
+            return true
+        end
+    end
+    -- if we made it here, there is either no piece, or no enPassant flagged pawns
+    return false
+end
+
+--[[
+    sets enPassant flag to true on the given piece
+]]
+function Board:setEnPassant(piece)
+    for i = 1, #self.pieces do
+        if self.pieces[i].gridX == piece.gridX and self.pieces[i].gridY == piece.gridY then
+            self.pieces[i].enPassant = true
+        end
+    end
+end
+
+--[[
+    resets enPassant flag to false for all pieces
+]]
+function Board:resetEnPassant()
+    for i = 1, #self.pieces do
+        self.pieces[i].enPassant = false
+    end
+end
+
+--[[
+    returns color of the pawn with an enPassant flag
+]]
+function Board:enPassantColor()
+    for i = 1, #self.pieces do
+        if self.pieces[i].enPassant then
+            return self.pieces[i].color
+        end
+    end
+    -- if we made it here there is no pawn with an enPassant flag
+    return nil
 end

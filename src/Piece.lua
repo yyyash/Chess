@@ -20,7 +20,6 @@ function Piece:init(x, y, color, pieceType, tileID, player)
     self.firstMove = true
     -- pawns only
     self.enPassant = false
-    self.takenByEnPassant = false
 
     -- coordinate positions
     self.x = (self.gridX - 1) * TILE_SIZE + BOARD_OFFSET_X
@@ -34,6 +33,11 @@ function Piece:render()
         love.graphics.setColor(1, 1, 1, .4)
     else
         love.graphics.setColor(1, 1, 1, 1)
+    end
+    if self.enPassant then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setFont(gFonts['medium'])
+        love.graphics.print('en passant flag is on for piece at (' .. self.gridX .. ',' .. self.gridY .. ')' , 0, 0)
     end
     -- draw piece
     love.graphics.draw(gTextures['assets'], gFrames['pieces'][self.tileID], self.x, self.y)
