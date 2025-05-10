@@ -34,11 +34,6 @@ function Piece:render()
     else
         love.graphics.setColor(1, 1, 1, 1)
     end
-    if self.enPassant then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.setFont(gFonts['medium'])
-        love.graphics.print('en passant flag is on for piece at (' .. self.gridX .. ',' .. self.gridY .. ')' , 0, 0)
-    end
     -- draw piece
     love.graphics.draw(gTextures['assets'], gFrames['pieces'][self.tileID], self.x, self.y)
 end
