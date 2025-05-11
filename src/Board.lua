@@ -275,6 +275,84 @@ function Board:legalMoves(piece)
             checkX = checkX - 1
             checkY = checkY - 1
         end
+    elseif piece.pieceType == 'rook' then
+        -- check X variable for checking right side moves
+        local checkX = piece.gridX + 1
+        local checkY = piece.gridY
+
+        while checkX <= 8 do
+            -- check if there are pieces on this square
+            if self:emptySquare(checkX, checkY) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            -- check if its an opposite color piece
+            -- we are done looking, add this piece to the legal moves and breakout of the loop
+            elseif self:oppColor(checkX, checkY, piece) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+                break
+            -- same color piece is here, don't add to legal moves table, just breakout
+            else
+                break
+            end
+            checkX = checkX + 1
+        end  
+
+        -- reset checkX for checking left side moves
+        local checkX = piece.gridX - 1
+
+        while checkX >= 1 do
+            -- check if there are pieces on this square
+            if self:emptySquare(checkX, checkY) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            -- check if its an opposite color piece
+            -- we are done looking, add this piece to the legal moves and breakout of the loop
+            elseif self:oppColor(checkX, checkY, piece) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+                break
+            -- same color piece is here, don't add to legal moves table, just breakout
+            else
+                break
+            end
+            checkX = checkX - 1
+        end  
+
+        -- reset checkX for checking top moves
+        local checkX = piece.gridX
+        local checkY = piece.gridY - 1
+
+        while checkY >= 1 do
+            -- check if there are pieces on this square
+            if self:emptySquare(checkX, checkY) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            -- check if its an opposite color piece
+            -- we are done looking, add this piece to the legal moves and breakout of the loop
+            elseif self:oppColor(checkX, checkY, piece) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+                break
+            -- same color piece is here, don't add to legal moves table, just breakout
+            else
+                break
+            end
+            checkY = checkY - 1
+        end
+
+        -- reset checkX for checking bottom moves
+        local checkY = piece.gridY + 1
+
+        while checkY <= 8 do
+            -- check if there are pieces on this square
+            if self:emptySquare(checkX, checkY) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            -- check if its an opposite color piece
+            -- we are done looking, add this piece to the legal moves and breakout of the loop
+            elseif self:oppColor(checkX, checkY, piece) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+                break
+            -- same color piece is here, don't add to legal moves table, just breakout
+            else
+                break
+            end
+            checkY = checkY + 1
+        end
     end
         return legalMoves 
 end
