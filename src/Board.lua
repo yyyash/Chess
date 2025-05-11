@@ -191,9 +191,92 @@ function Board:legalMoves(piece)
                 end
             end
         end
-        
-        return legalMoves
+
+    elseif piece.pieceType == 'bishop' then
+        -- variables for checking diagonal pieces
+        -- initialize to check for bottom right moves
+        local checkX = piece.gridX + 1
+        local checkY = piece.gridY + 1
+        -- while gridX and gridY are in bounds
+        -- check moves until we are out of bounds
+        while checkX <= 8 and checkY <= 8 do
+            -- check if there are pieces on this square
+            if self:emptySquare(checkX, checkY) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            -- check if its an opposite color piece
+            -- we are done looking, add this piece to the legal moves and breakout of the loop
+            elseif self:oppColor(checkX, checkY, piece) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+                break
+            -- same color piece is here, don't add to legal moves table, just breakout
+            else
+                break
+            end
+            checkX = checkX + 1
+            checkY = checkY + 1
+        end  
+        -- reset check variables for top right moves
+        checkX = piece.gridX + 1
+        checkY = piece.gridY - 1
+        -- check top right diagonal moves
+        while checkX <= 8 and checkY >= 1 do
+        -- check if there are pieces on this square
+            if self:emptySquare(checkX, checkY) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            -- check if its an opposite color piece
+            -- we are done looking, add this piece to the legal moves and breakout of the loop
+            elseif self:oppColor(checkX, checkY, piece) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+                break
+            -- same color piece is here, don't add to legal moves table, just breakout
+            else
+                break
+            end
+            checkX = checkX + 1
+            checkY = checkY - 1
+        end  
+        -- reset check variables for bottom left moves
+        checkX = piece.gridX - 1
+        checkY = piece.gridY + 1
+        -- check bottom left moves
+        while checkX >= 1 and checkY <= 8 do
+        -- check if there are pieces on this square
+            if self:emptySquare(checkX, checkY) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            -- check if its an opposite color piece
+            -- we are done looking, add this piece to the legal moves and breakout of the loop
+            elseif self:oppColor(checkX, checkY, piece) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+                break
+            -- same color piece is here, don't add to legal moves table, just breakout
+            else
+                break
+            end
+            checkX = checkX - 1
+            checkY = checkY + 1
+        end
+        -- reset check variables for bottom left moves
+        checkX = piece.gridX - 1
+        checkY = piece.gridY - 1
+        -- check top left moves
+        while checkX >= 1 and checkY >= 1 do
+        -- check if there are pieces on this square
+            if self:emptySquare(checkX, checkY) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            -- check if its an opposite color piece
+            -- we are done looking, add this piece to the legal moves and breakout of the loop
+            elseif self:oppColor(checkX, checkY, piece) then
+                table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+                break
+            -- same color piece is here, don't add to legal moves table, just breakout
+            else
+                break
+            end
+            checkX = checkX - 1
+            checkY = checkY - 1
+        end
     end
+        return legalMoves 
 end
 
 --[[
