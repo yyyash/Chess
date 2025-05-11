@@ -1,6 +1,5 @@
 --[[
-    The Board is our arrangement of Tiles with which we must try to find matching
-    sets of three horizontally or vertically.
+    The Board is our piece handler using a table of pieces
 ]]
 
 Board = Class{}
@@ -121,7 +120,6 @@ function Board:legalMoves(piece)
                     table.insert(legalMoves, possibleMoves[i])
             end
         end
-
         return legalMoves
 
     elseif piece.pieceType == 'pawn' then
@@ -190,6 +188,7 @@ function Board:legalMoves(piece)
                 end
             end
         end
+        return legalMoves 
 
     elseif piece.pieceType == 'bishop' then
         -- variables for checking diagonal pieces
@@ -274,6 +273,8 @@ function Board:legalMoves(piece)
             checkX = checkX - 1
             checkY = checkY - 1
         end
+        return legalMoves 
+
     elseif piece.pieceType == 'rook' then
         -- check X variable for checking right side moves
         local checkX = piece.gridX + 1
@@ -352,6 +353,8 @@ function Board:legalMoves(piece)
             end
             checkY = checkY + 1
         end
+        return legalMoves 
+        
     elseif piece.pieceType == 'queen' then
         -- just copy the bishop and the rook code
         -- variables for checking diagonal pieces
@@ -515,8 +518,32 @@ function Board:legalMoves(piece)
             end
             checkY = checkY + 1
         end
+        return legalMoves 
+    elseif piece.pieceType == 'king' then
+        possibleMoves = {
+            -- 8 possible moves for king
+            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1},
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1},
+            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1},
+
+            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY},
+            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1},
+
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1},
+            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1},
+
+            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY}
+        }
+
+        -- only include moves that are inbounds and land on an opposite color piece or an empty square
+        for i = 1, #possibleMoves do
+            if self:gridInBounds(possibleMoves[i]['gridX'], possibleMoves[i]['gridY']) and 
+                (self:oppColor(possibleMoves[i]['gridX'], possibleMoves[i]['gridY'], piece) or self:emptySquare(possibleMoves[i]['gridX'], possibleMoves[i]['gridY'])) then
+                    table.insert(legalMoves, possibleMoves[i])
+            end
+        end
+        return legalMoves 
     end
-    return legalMoves 
 end
 
 --[[
