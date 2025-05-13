@@ -411,17 +411,17 @@ function Board:kingMoves(piece)
     local legalMoves = {}
     local possibleMoves = {
         -- 8 possible moves for king
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1},
-        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1},
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1},
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false },
+        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false },
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false },
 
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY},
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1},
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false },
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false },
 
-        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1},
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1},
+        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false },
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false },
 
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY}
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false }
     }
 
     -- only include moves that are inbounds and land on an opposite color piece or an empty square
@@ -431,6 +431,51 @@ function Board:kingMoves(piece)
                 table.insert(legalMoves, possibleMoves[i])
         end
     end
+
+    -- castling
+    -- can only castle if king hasn't moved
+    if piece.firstMove == true then
+        local emptySquareCount = 0
+        local checkX = piece.gridX
+        -- check to the right (3 squares only)
+        -- if there are 2 empty squares followed by a rook that hasn't moved, then castling is legal
+        for i = 1, 3 do
+            -- if its an empty square, increment the count
+            if self:emptySquare(piece.gridX + i, piece.gridY) then
+                emptySquareCount = emptySquareCount + 1
+            -- if we already found 2 empty squares
+            elseif emptySquareCount == 2 and 
+                -- and its a rook
+                self:pieceType(piece.gridX + i, piece.gridY) == 'rook' and 
+                -- and its the same color
+                piece.color == self:pieceColor(piece.gridX + i, piece.gridY) and
+                -- and that rook hasn't moved
+                self:pieceFirstMove(piece.gridX + i, piece.gridY) then
+                    -- king can castle, add right side castle to the legalmoves table
+                    table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true })
+            end
+        end
+
+        -- check to the left (4 squares only)
+        -- if there are 3 empty squares followed by a rook that hasn't moved, then castling is legal
+        for i = 1, 4 do
+            -- if its an empty square, increment the count
+            if self:emptySquare(piece.gridX - i, piece.gridY) then
+                emptySquareCount = emptySquareCount + 1
+            -- if we already found 2 empty squares
+            elseif emptySquareCount == 3 and 
+                -- and its a rook
+                self:pieceType(piece.gridX - i, piece.gridY) == 'rook' and 
+                -- and its the same color
+                piece.color == self:pieceColor(piece.gridX - i, piece.gridY) and
+                -- and that rook hasn't moved
+                self:pieceFirstMove(piece.gridX - i, piece.gridY) then
+                    -- king can castle, add left side castle to the legalmoves table
+                    table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 1, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false })
+            end
+        end
+    end
+
     return legalMoves 
 end
 
@@ -479,6 +524,17 @@ function Board:pieceType(x, y)
     for i = 1, #self.pieces do
         if self.pieces[i].gridX == x and self.pieces[i].gridY == y then
             return self.pieces[i].pieceType
+        end
+    end
+end
+
+--[[
+    returns true if the piece hasn't moved
+]]
+function Board:pieceFirstMove(x, y)
+    for i = 1, #self.pieces do
+        if self.pieces[i].gridX == x and self.pieces[i].gridY == y then
+            return self.pieces[i].firstMove
         end
     end
 end

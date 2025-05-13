@@ -9,7 +9,7 @@ function PlayState:init()
     self.selectedGridX = 0
     self.selectedGridY = 0
     self.selectedPiece = nil
-    self.selectedPieceMoves = {}
+    self.legalMoves = {}
 end
 
 --[[ function PlayState:enter(params)
@@ -49,34 +49,60 @@ function PlayState:update(dt)
     -- take piece if legal move chosen matched with opponent's piece
     else
         -- calculate moves for selected piece
-        self.selectedPieceMoves = self.board:getMoves(self.selectedPiece)
-        -- check if any of these moves result with the player in check, remove those moves from selectedPieceMoves
+        self.legalMoves = self.board:getMoves(self.selectedPiece)
+        -- check if any of these moves result with the player in check, remove those moves from legalMoves
 
         -- mouse was clicked while we have a piece selected
         if love.mouse.wasPressed(1) then
             -- check if we clicked on a legalMove
             self.selectedGridX, self.selectedGridY = self:clickToGrid(love.mouse.x, love.mouse.y)
-            if self.selectedPieceMoves ~= nil then
-                for i = 1, #self.selectedPieceMoves do
-                    if self.selectedGridX == self.selectedPieceMoves[i]['gridX'] and self.selectedGridY == self.selectedPieceMoves[i]['gridY'] then
-                        -- clicked on a legal move
-                        -- if there is a piece on this square, take it
-                        if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false then
+
+            if self.legalMoves ~= nil then
+
+                for i = 1, #self.legalMoves do
+
+                    -- if we clicked on a legal move
+                    if self.selectedGridX == self.legalMoves[i]['gridX'] and self.selectedGridY == self.legalMoves[i]['gridY'] then
+
+                        -- if there is a piece on this square and its a different color, take it
+                        if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false and self.board:pieceColor(self.selectedGridX, self.selectedGridY) ~= self.selectedPiece.color then
                             self.board:takePiece(self.selectedGridX, self.selectedGridY)
+
                         -- set the enPassantFlag if pawn first moved to an adjecent enemy pawn
-                        elseif self.selectedPieceMoves[i]['triggersEnPassant'] then
+                        elseif self.legalMoves[i]['triggersEnPassant'] then
                             self.board:setEnPassant(self.selectedPiece)
-                        end
+
                         -- take the pawn by en passant
-                        if self.selectedPieceMoves[i]['enPassantTake'] then
+                        elseif self.legalMoves[i]['enPassantTake'] then
                             -- check if en passant piece is above
-                            if self.board:checkEnPassant(self.selectedPieceMoves[i]['gridX'], self.selectedPieceMoves[i]['gridY'] + 1) then
-                                self.board:takePiece(self.selectedPieceMoves[i]['gridX'], self.selectedPieceMoves[i]['gridY'] + 1)
+                            if self.board:checkEnPassant(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] + 1) then
+                                self.board:takePiece(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] + 1)
                             -- check if en passant piece is below
-                            elseif self.board:checkEnPassant(self.selectedPieceMoves[i]['gridX'], self.selectedPieceMoves[i]['gridY'] - 1) then
-                                self.board:takePiece(self.selectedPieceMoves[i]['gridX'], self.selectedPieceMoves[i]['gridY'] - 1)
+                            elseif self.board:checkEnPassant(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] - 1) then
+                                self.board:takePiece(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] - 1)
+                            end
+
+                        -- castle right
+                        elseif self.legalMoves[i]['castleRight'] then
+                            for i = 1, #self.board.pieces do
+                                -- find the rook to the right of the selected king
+                                if self.board.pieces[i].gridX == self.selectedPiece.gridX + 3 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                                    -- move the rook 1 square to the right of the selected king
+                                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX + 1, self.selectedPiece.gridY)
+                                end
+                            end
+
+                        -- castle left
+                        elseif self.legalMoves[i]['castleLeft'] then
+                            for i = 1, #self.board.pieces do
+                                -- find the rook to the left of the selected king
+                                if self.board.pieces[i].gridX == self.selectedPiece.gridX - 4 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                                    -- move the rook 2 squares to the left of the selected king
+                                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX - 2, self.selectedPiece.gridY)
+                                end
                             end
                         end
+
                         -- move the piece to the selected square
                         for i = 1, #self.board.pieces do
                             if self.board.pieces[i].isSelected then
@@ -98,7 +124,7 @@ function PlayState:update(dt)
             -- reset selected piece and legal moves
             self.board:deselectPiece()
             self.selectedPiece = nil
-            self.selectedPieceMoves = {}
+            self.legalMoves = {}
         end
     end
 end
@@ -106,13 +132,13 @@ end
 function PlayState:render()
     -- draw board
     self.board:render()
-    if self.selectedPieceMoves ~= nil then
+    if self.legalMoves ~= nil then
         -- render legal move indicators
-        for i = 1, #self.selectedPieceMoves do
+        for i = 1, #self.legalMoves do
             love.graphics.setColor(0, 247/255, 0, .8)
             love.graphics.circle('fill', 
-                (self.selectedPieceMoves[i]['gridX'] - 1) * TILE_SIZE + BOARD_OFFSET_X + (TILE_SIZE/2), 
-                (self.selectedPieceMoves[i]['gridY'] - 1) * TILE_SIZE + BOARD_OFFSET_Y + (TILE_SIZE/2), 
+                (self.legalMoves[i]['gridX'] - 1) * TILE_SIZE + BOARD_OFFSET_X + (TILE_SIZE/2), 
+                (self.legalMoves[i]['gridY'] - 1) * TILE_SIZE + BOARD_OFFSET_Y + (TILE_SIZE/2), 
                 6)
         end
     end
