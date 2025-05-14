@@ -52,7 +52,7 @@ gFrames = {
 }
 
 gFonts = {
-    ['small'] = love.graphics.newFont('fonts/gelian.ttf', 8),
-    ['medium'] = love.graphics.newFont('fonts/gelian.ttf', 16),
-    ['large'] = love.graphics.newFont('fonts/gelian.ttf', 32)
+    ['small'] = love.graphics.newFont('fonts/m6x11.ttf', 16),
+    ['medium'] = love.graphics.newFont('fonts/m6x11.ttf', 32),
+    ['large'] = love.graphics.newFont('fonts/m6x11.ttf', 48)
 }

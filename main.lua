@@ -12,7 +12,7 @@ require 'src/Dependencies'
 -- load
 function love.load()
     -- window bar title
-    love.window.setTitle('Chess')
+    love.window.setTitle('Chess by Josh Green')
 
     -- seed the RNG
     math.randomseed(os.time())
@@ -63,6 +63,11 @@ function love.draw()
     love.graphics.rectangle('fill', 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
 
     gStateMachine:render()
+
+    -- print fps
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setFont(gFonts['small'])
+    love.graphics.printf('FPS: ' .. tostring(love.timer.getFPS()), 1, 1, VIRTUAL_WIDTH, 'left')
     push:finish()
 end
 

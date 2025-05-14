@@ -64,6 +64,7 @@ function PlayState:update(dt)
                     -- if we clicked on a legal move
                     if self.selectedGridX == self.legalMoves[i]['gridX'] and self.selectedGridY == self.legalMoves[i]['gridY'] then
 
+                        -- check the special cases of legal moves: en passant, castling, pawn promotions
                         -- if there is a piece on this square and its a different color, take it
                         if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false and self.board:pieceColor(self.selectedGridX, self.selectedGridY) ~= self.selectedPiece.color then
                             self.board:takePiece(self.selectedGridX, self.selectedGridY)
@@ -103,6 +104,7 @@ function PlayState:update(dt)
                             end
                         end
 
+                        -- if we clicked on a legal move, a piece is moving regardless of the special cases
                         -- move the piece to the selected square
                         for i = 1, #self.board.pieces do
                             if self.board.pieces[i].isSelected then
@@ -110,12 +112,22 @@ function PlayState:update(dt)
                                 -- if player 1 just moved and player 2 had an enPassant pawn, reset the enPassant flag
                                 if self.board:enPassantColor() ~= nil and self.board:enPassantColor() ~= self.turn then
                                     self.board:resetEnPassant()
+
+                                -- pawn promotion
+                                elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 1 and self.turn == 'white' then
+                                    self.board.pieces[i].pieceType = 'queen'
+                                    self.board.pieces[i].tileID = WHITE_QUEEN
+                                elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 8 and self.turn == 'black' then
+                                    self.board.pieces[i].pieceType = 'queen'
+                                    self.board.pieces[i].tileID = BLACK_QUEEN
                                 end
+                
                                 -- change turns since we just moved
                                 self:changeTurns()
                                 break
                             end
                         end
+                        
                         -- look for check
 
                     end

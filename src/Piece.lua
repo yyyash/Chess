@@ -20,6 +20,8 @@ function Piece:init(x, y, color, pieceType, tileID, player)
     self.firstMove = true
     -- pawns only
     self.enPassant = false
+    -- in check flag
+    self.inCheck = false
 
     -- coordinate positions
     self.x = (self.gridX - 1) * TILE_SIZE + BOARD_OFFSET_X
@@ -47,5 +49,14 @@ function Piece:moveTo(x, y)
     -- turn firstMove flag off
     if self.firstMove == true then
         self.firstMove = false
+    end
+
+    -- player 1 pawn promotion
+    if self.player == 1 and self.type == 'pawn' and self.gridY == 1 then
+        self.pieceType = 'queen'
+        self.tileID = WHITE_QUEEN
+    elseif self.player == 2 and self.type == 'pawn' and self.gridY == 8 then
+        self.pieceType = 'queen'
+        self.tildID = BLACK_QUEEN
     end
 end

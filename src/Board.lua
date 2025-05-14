@@ -458,6 +458,7 @@ function Board:kingMoves(piece)
 
         -- check to the left (4 squares only)
         -- if there are 3 empty squares followed by a rook that hasn't moved, then castling is legal
+        emptySquareCount = 0
         for i = 1, 4 do
             -- if its an empty square, increment the count
             if self:emptySquare(piece.gridX - i, piece.gridY) then
