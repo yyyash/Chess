@@ -36,6 +36,16 @@ function Piece:render()
     else
         love.graphics.setColor(1, 1, 1, 1)
     end
+
+    -- highlight square red if the king is in check
+    if self.inCheck then
+        love.graphics.setColor(240/255, 38/255, 38/255, .5)
+        love.graphics.rectangle('fill', self.x, self.y, TILE_SIZE, TILE_SIZE)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setFont(gFonts['small'])
+        love.graphics.printf(self.color .. ' is in check', 1, 13, VIRTUAL_WIDTH, 'center')
+    end
+
     -- draw piece
     love.graphics.draw(gTextures['assets'], gFrames['pieces'][self.tileID], self.x, self.y)
 end

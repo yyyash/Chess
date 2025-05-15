@@ -129,6 +129,70 @@ function Board:getMoves(piece)
 end
 
 --[[
+    get all moves for a certain color
+]]
+function Board:getAllMoves(color)
+    local allMoves = {}
+    for i = 1, #self.pieces do
+        if self.pieces[i].color == color then
+            TableConcat(allMoves, self:getMoves(self.pieces[i]))
+            --table.insert(allMoves, self:getMoves(self.pieces[i]))
+        end
+    end
+    return allMoves
+end
+
+--[[
+    look for check
+    returns true if player is in check
+]]
+function Board:getCheck(color, moves)
+    -- for all moves in the moves table
+    -- check if the king has the same gridX and gridY as a move from the move table
+    local kingX, kingY = self:getKingPos(color)
+
+    --[[ --debug
+    print(color .. ' king pos = ' .. kingX .. ', ' .. kingY) ]]
+
+    if moves ~= nil then
+        for i = 1, #moves do
+            if moves[i]['gridX'] == kingX and moves[i]['gridY'] == kingY then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+--[[
+    sets inCheck value for the king
+]]
+function Board:setCheck(color)
+    for i = 1, #self.pieces do
+        if self.pieces[i].color == color and self.pieces[i].pieceType == 'king' then
+            if self.pieces[i].inCheck == false then
+                self.pieces[i].inCheck = true
+            end
+            return
+        end
+    end
+end
+
+--[[
+    resets inCheck value for the king
+]]
+function Board:resetCheck(color)
+    for i = 1, #self.pieces do
+        if self.pieces[i].color == color and self.pieces[i].pieceType == 'king' then
+            if self.pieces[i].inCheck == true then
+                self.pieces[i].inCheck = false
+            end
+            return
+        end
+    end
+end
+
+--[[
     knight legal moves code
 ]]
 function Board:knightMoves(piece)
@@ -638,4 +702,15 @@ function Board:enPassantColor()
     end
     -- if we made it here there is no pawn with an enPassant flag
     return nil
+end
+
+--[[
+    gets the kings current position for a player
+]]
+function Board:getKingPos(color)
+    for i = 1, #self.pieces do
+        if self.pieces[i].pieceType == 'king' and self.pieces[i].color == color then
+            return self.pieces[i].gridX, self.pieces[i].gridY
+        end
+    end
 end

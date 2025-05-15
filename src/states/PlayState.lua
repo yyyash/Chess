@@ -10,6 +10,7 @@ function PlayState:init()
     self.selectedGridY = 0
     self.selectedPiece = nil
     self.legalMoves = {}
+    self.allMoves = {}
 end
 
 --[[ function PlayState:enter(params)
@@ -109,6 +110,7 @@ function PlayState:update(dt)
                         for i = 1, #self.board.pieces do
                             if self.board.pieces[i].isSelected then
                                 self.board.pieces[i]:moveTo(self.selectedGridX, self.selectedGridY)
+
                                 -- if player 1 just moved and player 2 had an enPassant pawn, reset the enPassant flag
                                 if self.board:enPassantColor() ~= nil and self.board:enPassantColor() ~= self.turn then
                                     self.board:resetEnPassant()
@@ -117,26 +119,60 @@ function PlayState:update(dt)
                                 elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 1 and self.turn == 'white' then
                                     self.board.pieces[i].pieceType = 'queen'
                                     self.board.pieces[i].tileID = WHITE_QUEEN
+
                                 elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 8 and self.turn == 'black' then
                                     self.board.pieces[i].pieceType = 'queen'
                                     self.board.pieces[i].tileID = BLACK_QUEEN
                                 end
-                
-                                -- change turns since we just moved
+                                
+                                -- now that the player has moved, grab all the new moves for that player
+                                self.allMoves = self.board:getAllMoves(self.turn)
+
+                                -- debug
+                               print(self.turn .. ' has ' .. #self.allMoves .. ' moves.')
+                                
+                                -- look for check on the opposing player and set check on the opposing king
                                 self:changeTurns()
+
+                                if self.board:getCheck(self.turn, self.allMoves) then
+                                    -- debug
+                                    print(self.turn .. ' is in check.')
+                                    print('----------------')
+                                    self.board:setCheck(self.turn)
+                                else
+                                    -- debug
+                                    print(self.turn .. ' is not in check.')
+                                    print('----------------')
+                                    -- self.board:resetCheck(self.turn)
+                                end
+
+                                -- reset check if we just moved to protect the king
+                                self.allMoves = {}
+                                self.allMoves = self.board:getAllMoves(self.turn)
+
+                                -- change turns to look at our own check status
+                                self:changeTurns()
+                                if self.board:getCheck(self.turn, self.allMoves) == false then
+                                    self.board:resetCheck(self.turn)
+                                else
+                                    -- we just moved ourself into check (this is not legal, don't need to check for it here)
+                                    self.board:setCheck(self.turn)
+                                end
+                                -- change turns, current move is over
+                                self:changeTurns()
+
                                 break
                             end
                         end
-                        
-                        -- look for check
-
                     end
                 end
             end
+
             -- reset selected piece and legal moves
             self.board:deselectPiece()
             self.selectedPiece = nil
             self.legalMoves = {}
+            self.allMoves = {}
         end
     end
 end
