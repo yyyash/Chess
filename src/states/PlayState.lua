@@ -10,6 +10,7 @@ function PlayState:init()
     self.selectedGridY = 0
     self.selectedPiece = nil
     self.legalMoves = {}
+    self.moveIndex = {}
     self.allMoves = {}
 end
 
@@ -51,121 +52,44 @@ function PlayState:update(dt)
     else
         -- calculate moves for selected piece
         self.legalMoves = self.board:getMoves(self.selectedPiece)
+        --local getMoves = self.board:getMoves(self.selectedPiece)
+
         -- check if any of these moves result with the player in check, remove those moves from legalMoves
+        -- iterate through getMoves table
+        -- make each move, be sure to get piece info if a piece is taken
+        -- local takenPiece = {}
+        -- get check info against ourself, if we are in check, do not add this move to the return table
+        -- reset pieces to original positions (insert taken pieces back into the board table)
+
+--[[         for i = 1, #getMoves do
+            if self.board:emptySquare(getMoves[i]['gridX'], getMoves[i]['gridY']) then
+                
+            end
+        end ]]
 
         -- mouse was clicked while we have a piece selected
         if love.mouse.wasPressed(1) then
             -- check if we clicked on a legalMove
             self.selectedGridX, self.selectedGridY = self:clickToGrid(love.mouse.x, love.mouse.y)
 
-            if self.legalMoves ~= nil then
+            if self.legalMoves ~= nil and self:legalMoveSelected() then
+                
+                self.moveIndex = self:getMoveIndex()
 
-                for i = 1, #self.legalMoves do
-
-                    -- if we clicked on a legal move
-                    if self.selectedGridX == self.legalMoves[i]['gridX'] and self.selectedGridY == self.legalMoves[i]['gridY'] then
-
-                        -- check the special cases of legal moves: en passant, castling, pawn promotions
-                        -- if there is a piece on this square and its a different color, take it
-                        if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false and self.board:pieceColor(self.selectedGridX, self.selectedGridY) ~= self.selectedPiece.color then
-                            self.board:takePiece(self.selectedGridX, self.selectedGridY)
-
-                        -- set the enPassantFlag if pawn first moved to an adjecent enemy pawn
-                        elseif self.legalMoves[i]['triggersEnPassant'] then
-                            self.board:setEnPassant(self.selectedPiece)
-
-                        -- take the pawn by en passant
-                        elseif self.legalMoves[i]['enPassantTake'] then
-                            -- check if en passant piece is above
-                            if self.board:checkEnPassant(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] + 1) then
-                                self.board:takePiece(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] + 1)
-                            -- check if en passant piece is below
-                            elseif self.board:checkEnPassant(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] - 1) then
-                                self.board:takePiece(self.legalMoves[i]['gridX'], self.legalMoves[i]['gridY'] - 1)
-                            end
-
-                        -- castle right
-                        elseif self.legalMoves[i]['castleRight'] then
-                            for i = 1, #self.board.pieces do
-                                -- find the rook to the right of the selected king
-                                if self.board.pieces[i].gridX == self.selectedPiece.gridX + 3 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
-                                    -- move the rook 1 square to the right of the selected king
-                                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX + 1, self.selectedPiece.gridY)
-                                end
-                            end
-
-                        -- castle left
-                        elseif self.legalMoves[i]['castleLeft'] then
-                            for i = 1, #self.board.pieces do
-                                -- find the rook to the left of the selected king
-                                if self.board.pieces[i].gridX == self.selectedPiece.gridX - 4 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
-                                    -- move the rook 2 squares to the left of the selected king
-                                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX - 2, self.selectedPiece.gridY)
-                                end
-                            end
-                        end
-
-                        -- if we clicked on a legal move, a piece is moving regardless of the special cases
-                        -- move the piece to the selected square
-                        for i = 1, #self.board.pieces do
-                            if self.board.pieces[i].isSelected then
-                                self.board.pieces[i]:moveTo(self.selectedGridX, self.selectedGridY)
-
-                                -- if player 1 just moved and player 2 had an enPassant pawn, reset the enPassant flag
-                                if self.board:enPassantColor() ~= nil and self.board:enPassantColor() ~= self.turn then
-                                    self.board:resetEnPassant()
-
-                                -- pawn promotion
-                                elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 1 and self.turn == 'white' then
-                                    self.board.pieces[i].pieceType = 'queen'
-                                    self.board.pieces[i].tileID = WHITE_QUEEN
-
-                                elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 8 and self.turn == 'black' then
-                                    self.board.pieces[i].pieceType = 'queen'
-                                    self.board.pieces[i].tileID = BLACK_QUEEN
-                                end
-                                
-                                -- now that the player has moved, grab all the new moves for that player
-                                self.allMoves = self.board:getAllMoves(self.turn)
-
-                                -- debug
-                               print(self.turn .. ' has ' .. #self.allMoves .. ' moves.')
-                                
-                                -- look for check on the opposing player and set check on the opposing king
-                                self:changeTurns()
-
-                                if self.board:getCheck(self.turn, self.allMoves) then
-                                    -- debug
-                                    print(self.turn .. ' is in check.')
-                                    print('----------------')
-                                    self.board:setCheck(self.turn)
-                                else
-                                    -- debug
-                                    print(self.turn .. ' is not in check.')
-                                    print('----------------')
-                                    -- self.board:resetCheck(self.turn)
-                                end
-
-                                -- reset check if we just moved to protect the king
-                                self.allMoves = {}
-                                self.allMoves = self.board:getAllMoves(self.turn)
-
-                                -- change turns to look at our own check status
-                                self:changeTurns()
-                                if self.board:getCheck(self.turn, self.allMoves) == false then
-                                    self.board:resetCheck(self.turn)
-                                else
-                                    -- we just moved ourself into check (this is not legal, don't need to check for it here)
-                                    self.board:setCheck(self.turn)
-                                end
-                                -- change turns, current move is over
-                                self:changeTurns()
-
-                                break
-                            end
-                        end
-                    end
+                -- if there is a piece on this square and its a different color, take it
+                if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false and self.board:pieceColor(self.selectedGridX, self.selectedGridY) ~= self.selectedPiece.color then
+                    self.board:takePiece(self.selectedGridX, self.selectedGridY)
                 end
+
+                -- move the selected piece to the selected square
+                self:makeMove(self.legalMoves[self.moveIndex])
+
+                -- set check if we put the opponent in check
+                -- reset check if we moved to protect the king
+                self:setCheck()
+
+                -- change turns, current move is over
+                self:changeTurns()    
             end
 
             -- reset selected piece and legal moves
@@ -224,3 +148,128 @@ function PlayState:changeTurns()
     end
 end
 
+--[[
+    sets enPassant
+    takes a piece en passant
+    moves the rook for castling
+    moves selected piece to selected square
+    resets en passant flag if not taken
+    promotes pawns
+]]
+function PlayState:makeMove(move)
+    -- set piece values for the special cases of moves: en passant, castling, pawn promotion
+    -- uses flags set in the moves table during move generation
+
+    -- set the enPassantFlag if pawn first moved to an adjecent enemy pawn
+    if move['triggersEnPassant'] then
+        self.board:setEnPassant(self.selectedPiece)
+
+    -- take the pawn by en passant
+    elseif move['enPassantTake'] then
+        -- check if en passant piece is above
+        if self.board:checkEnPassant(move['gridX'], move['gridY'] + 1) then
+            self.board:takePiece(move['gridX'], move['gridY'] + 1)
+        -- check if en passant piece is below
+        elseif self.board:checkEnPassant(move['gridX'], move['gridY'] - 1) then
+            self.board:takePiece(move['gridX'], move['gridY'] - 1)
+        end
+
+    -- castle right
+    elseif move['castleRight'] then
+        for i = 1, #self.board.pieces do
+            -- find the rook to the right of the selected king
+            if self.board.pieces[i].gridX == self.selectedPiece.gridX + 3 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                -- move the rook 1 square to the right of the selected king
+                self.board.pieces[i]:moveTo(self.selectedPiece.gridX + 1, self.selectedPiece.gridY)
+            end
+        end
+
+    -- castle left
+    elseif move['castleLeft'] then
+        for i = 1, #self.board.pieces do
+            -- find the rook to the left of the selected king
+            if self.board.pieces[i].gridX == self.selectedPiece.gridX - 4 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                -- move the rook 2 squares to the left of the selected king
+                self.board.pieces[i]:moveTo(self.selectedPiece.gridX - 2, self.selectedPiece.gridY)
+            end
+        end
+    end
+
+    -- move the piece to the selected square
+    for i = 1, #self.board.pieces do
+        if self.board.pieces[i].isSelected then
+            self.board.pieces[i]:moveTo(self.selectedGridX, self.selectedGridY)
+
+            -- if player 1 just moved and player 2 had an enPassant pawn, reset the enPassant flag
+            if self.board:enPassantColor() ~= nil and self.board:enPassantColor() ~= self.turn then
+                self.board:resetEnPassant()
+
+            -- pawn promotion
+            elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 1 and self.turn == 'white' then
+                self.board.pieces[i].pieceType = 'queen'
+                self.board.pieces[i].tileID = WHITE_QUEEN
+
+            elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 8 and self.turn == 'black' then
+                self.board.pieces[i].pieceType = 'queen'
+                self.board.pieces[i].tileID = BLACK_QUEEN
+            end
+        end
+    end
+end
+
+--[[
+    returns the index of the move chosen from the legalMoves table
+]]
+function PlayState:getMoveIndex()
+    for i = 1, #self.legalMoves do
+        if self.selectedGridX == self.legalMoves[i]['gridX'] and self.selectedGridY == self.legalMoves[i]['gridY'] then
+            return i
+        end
+    end
+end
+
+--[[
+    returns true if a legal move was selected
+]]
+function PlayState:legalMoveSelected()
+    for i = 1, #self.legalMoves do
+        if self.selectedGridX == self.legalMoves[i]['gridX'] and self.selectedGridY == self.legalMoves[i]['gridY'] then
+            return true
+        end
+    end
+    
+    -- if we made it here, a legal move was not selected
+    return false
+end
+
+--[[
+    sets check as appropriate after a move has happened
+]]
+function PlayState:setCheck()
+    -- move the selected piece to the selected square
+    self:makeMove(self.legalMoves[self.moveIndex])
+
+    -- now that the player has moved, grab all the new moves for that player
+    self.allMoves = self.board:getAllMoves(self.turn)
+    
+    -- look for check on the opposing player and set check on the opposing king
+    self:changeTurns()
+    if self.board:getCheck(self.turn, self.allMoves) then
+        self.board:setCheck(self.turn)
+    end
+
+    -- reset check if we just moved to protect the king
+    self.allMoves = {}
+    self.allMoves = self.board:getAllMoves(self.turn)
+
+    -- change turns to look at our own check status
+    self:changeTurns()
+    if self.board:getCheck(self.turn, self.allMoves) == false then
+        self.board:resetCheck(self.turn)
+    else
+        -- we just moved ourself into check, not legal, we should never get here
+        self.board:setCheck(self.turn)
+        -- debug
+        print('shit is fucked up yo')
+    end
+end
