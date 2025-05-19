@@ -108,8 +108,6 @@ function Board:getMoves(piece)
     if piece.pieceType == 'knight' then
         return self:knightMoves(piece)
 
-    -- en passant
-    -- still needs promotions
     elseif piece.pieceType == 'pawn' then
         return self:pawnMoves(piece)
 
