@@ -36,37 +36,21 @@ function PlayState:update(dt)
             
             self.selectedGridX = math.floor((love.mouse.x - BOARD_OFFSET_X) / TILE_SIZE) + 1
             self.selectedGridY = math.floor((love.mouse.y - BOARD_OFFSET_Y) / TILE_SIZE) + 1
-            --print('self.selectedGrid values are ' .. self.selectedGridX .. ' , ' .. self.selectedGridY)
 
             -- only select the piece if it is the same color as the player turn
             if self.board:pieceColor(self.selectedGridX, self.selectedGridY) == self.turn then
                 self.selectedPiece = self.board:selectPiece(self.selectedGridX, self.selectedGridY)
                 -- get moves for piece clicked on
                 self.legalMoves = self:getLegalMoves()
-                -- in order for these moves to be legal, they cannot put the current turn in check
-                -- 
             end
         end
 
     -- if we have selected a piece
-    -- get its legal moves
     -- check for mouse clicks
     -- deselect if anything other than a legalMove was chosen
     -- move piece if legal move was chosen
-    -- change player turn after piece has moved
     -- take piece if legal move chosen matched with opponent's piece
     else
-        -- calculate moves for selected piece
-        --self.legalMoves = self.board:getMoves(self.selectedPiece)
-        --local getMoves = self.board:getMoves(self.selectedPiece)
-
-        -- check if any of these moves result with the player in check, remove those moves from legalMoves
-        -- iterate through getMoves table
-        -- make each move, be sure to get piece info if a piece is taken
-        -- local takenPiece = {}
-        -- get check info against ourself, if we are in check, do not add this move to the return table
-        -- reset pieces to original positions (insert taken pieces back into the board table)
-
         -- mouse was clicked while we have a piece selected
         if love.mouse.wasPressed(1) then
             -- check if we clicked on a legalMove
@@ -287,8 +271,10 @@ end
 function PlayState:getLegalMoves()
     -- this gets all of the possible moves for the currently selected piece
     local moves = self.board:getMoves(self.selectedPiece)
+    --print(self.turn .. ' got ' .. #moves .. ' moves from the getMoves function')
     local legalMoves = {}
     local opponentsMoves = {}
+    local opponentsColor = self.board:oppColor(self.selectedPiece.color)
     local tempPiece = {}
     local tempPieceIndex = 0
     local pieceRemoved = false
@@ -309,25 +295,54 @@ function PlayState:getLegalMoves()
     -- if no, move is legal, add to legalMoves table
     for i = 1, #moves do
 
-        -- move the selected piece
-        self.selectedPiece.gridX = moves[i]['gridX']
-        self.selectedPiece.gridY = moves[i]['gridY']
+        -- edge case where king cannot castle if any of the squares on the way to castling are under attack
+        if moves[i]['castleRight'] then
+            -- check if the square to the right is being attacked
+            -- change turn to get opponents moves
+            self:changeTurns()
+            opponentsMoves = self.board:getAllMoves(self.turn)
+            self:changeTurns()
 
-        -- check if there is an enemy piece where we just fake-moved to
+            for j = 1, #opponentsMoves do
+                if opponentsMoves[j]['gridX'] == self.selectedPiece.gridX + 1 and opponentsMoves[j]['gridY'] == self.selectedPiece.gridY then
+                    print('check check')
+                    goto continue
+                end
+            end
+        elseif moves[i]['castleLeft'] then
+            -- check if any of the two squares to the left are being attacked
+            -- change turn to get opponents moves
+            self:changeTurns()
+            opponentsMoves = self.board:getAllMoves(self.turn)
+            self:changeTurns()
+
+            for j = 1, #opponentsMoves do
+                if opponentsMoves[j]['gridX'] == self.selectedPiece.gridX - 1 and opponentsMoves[j]['gridY'] == self.selectedPiece.gridY then
+                    goto continue
+                elseif opponentsMoves[j]['gridX'] == self.selectedPiece.gridX - 2 and opponentsMoves[j]['gridY'] == self.selectedPiece.gridY then
+                    goto continue
+                end
+            end
+        end
+
+        -- check if there is an enemy piece where we are about to fake-move to
         if self.board:oppColor(moves[i]['gridX'], moves[i]['gridY'], self.selectedPiece) then
             for j = 1, #self.board.pieces do
                 -- found the piece
                 if self.board.pieces[j].gridX == moves[i]['gridX'] and self.board.pieces[j].gridY == moves[i]['gridY'] then
                     tempPiece = self.board.pieces[j]
                     tempPieceIndex = j
-                    break
+                    --break
                 end
             end
+            --print(self.board.pieces[tempPieceIndex].color .. ' ' .. self.board.pieces[tempPieceIndex].pieceType .. ' was removed from board pieces at pos ' .. tempPieceIndex)
             table.remove(self.board.pieces, tempPieceIndex)
             pieceRemoved = true
         end
 
-        
+        -- fake-move the selected piece
+        self.selectedPiece.gridX = moves[i]['gridX']
+        self.selectedPiece.gridY = moves[i]['gridY']
 
         -- change turn to get opponents moves
         self:changeTurns()
@@ -336,10 +351,14 @@ function PlayState:getLegalMoves()
 
         -- look for check on current turn using all of the opponents moves
         -- if this is false, then this move is legal, add it to the table
+        --print(self.board:getCheck(self.turn, opponentsMoves))
         if self.board:getCheck(self.turn, opponentsMoves) == false then
             table.insert(legalMoves, moves[i])
+        else
+            --print(self.turn .. ' is in danger of check')
         end
 
+        ::continue::
         -- reset opponentsMoves table before going to the next move
         opponentsMoves = {}
 
@@ -350,10 +369,12 @@ function PlayState:getLegalMoves()
         -- reinsert piece back into table if removed
         if pieceRemoved then
             table.insert(self.board.pieces, tempPieceIndex, tempPiece)
+            --print(tempPiece.color .. ' ' .. tempPiece.pieceType .. ' was inserted at pos ' .. tempPieceIndex .. ' into the self.board.pieces table')
             pieceRemoved = false
         end
-
     end
     -- done checking all of the current pieces moves, should be left with only legal moves now
+    --print(self.turn .. ' has ' .. #legalMoves .. ' legal moves with this piece')
+    --print('-------------------------------------')
     return legalMoves
 end

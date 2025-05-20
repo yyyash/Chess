@@ -495,10 +495,9 @@ function Board:kingMoves(piece)
     end
 
     -- castling
-    -- can only castle if king hasn't moved
-    if piece.firstMove == true then
+    -- can only castle if king hasn't moved and is not in check
+    if piece.firstMove == true and piece.inCheck == false then
         local emptySquareCount = 0
-        local checkX = piece.gridX
         -- check to the right (3 squares only)
         -- if there are 2 empty squares followed by a rook that hasn't moved, then castling is legal
         for i = 1, 3 do
@@ -711,4 +710,26 @@ function Board:getKingPos(color)
             return self.pieces[i].gridX, self.pieces[i].gridY
         end
     end
+end
+
+--[[
+    gets the opposite color of a piece
+]]
+function Board:getOppColor(piece)
+    if piece.color == 'white' then return 'black'
+    else return 'white'
+    end
+end
+
+--[[
+    returns true if the opponent is attacking a gridX, gridY
+]]
+function Board:oppAttack(x, y, moves)
+    for i = 1, #moves do
+        if moves[i]['gridX'] == x and moves[i]['gridY'] == y then
+            return true
+        end
+    end
+    -- if we got here, the x,y is not being attacked
+    return false
 end
