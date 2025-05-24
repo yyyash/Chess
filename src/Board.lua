@@ -163,6 +163,20 @@ function Board:getCheck(color, moves)
 end
 
 --[[
+    simple check
+    loop through all pieces and return true if a king is in check
+]]
+function Board:hasCheck()
+    for i = 1, #self.pieces do
+        if self.pieces[i].pieceType == 'king' and self.pieces[i].inCheck then
+            return true
+        end
+    end
+    -- if we got here, there is no check on the board
+    return false
+end
+
+--[[
     sets inCheck value for the king
 ]]
 function Board:setCheck(color)

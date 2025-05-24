@@ -12,6 +12,8 @@ function PlayState:init()
     self.legalMoves = {}
     self.moveIndex = {}
     self.allMoves = {}
+    self.checkmate = false
+    self.winner = 'no winner'
 end
 
 --[[ function PlayState:enter(params)
@@ -77,6 +79,8 @@ function PlayState:update(dt)
                 if self:checkMate(self.turn) then
                     self:changeTurns()
                     print('checkmate - ' .. self.turn .. ' wins')
+                    self.checkmate = true
+                    self.winner = self.turn
                     self:changeTurns()
                 end               
 
@@ -93,6 +97,8 @@ end
 function PlayState:render()
     -- draw board
     self.board:render()
+
+    -- render legal moves green circles
     if self.legalMoves ~= nil then
         -- render legal move indicators
         for i = 1, #self.legalMoves do
@@ -102,6 +108,20 @@ function PlayState:render()
                 (self.legalMoves[i]['gridY'] - 1) * TILE_SIZE + BOARD_OFFSET_Y + (TILE_SIZE/2), 
                 6)
         end
+    end
+
+    -- writes who is in check at the top of the screen
+    if self.board:hasCheck() and self.checkmate == false then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setFont(gFonts['small'])
+        love.graphics.printf(self.turn .. ' is in check', 1, 13, VIRTUAL_WIDTH, 'center')
+    end
+
+    -- writes checkmate and player who won at the top of the screen
+    if self.checkmate then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setFont(gFonts['small'])
+        love.graphics.printf('Checkmate - ' .. self.winner .. ' wins', 1, 13, VIRTUAL_WIDTH, 'center')
     end
 end
 

@@ -27,11 +27,11 @@ function love.load()
 
     -- initialize state machine
     gStateMachine = StateMachine {
-    ['start'] = function() return StartState() end,
+    ['menu'] = function() return MenuState() end,
     ['play'] = function() return PlayState() end,
     ['game-over'] = function() return GameOverState() end
     }
-    gStateMachine:change('play')
+    gStateMachine:change('menu')
 
     -- initialize input tables
     love.keyboard.keysPressed = {}
@@ -64,10 +64,11 @@ function love.draw()
 
     gStateMachine:render()
 
-    -- print fps
+--[[     -- print fps
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setFont(gFonts['small'])
-    love.graphics.printf('FPS: ' .. tostring(love.timer.getFPS()), 1, 1, VIRTUAL_WIDTH, 'left')
+    love.graphics.printf('FPS: ' .. tostring(love.timer.getFPS()), 1, 1, VIRTUAL_WIDTH, 'left') ]]
+
     push:finish()
 end
 

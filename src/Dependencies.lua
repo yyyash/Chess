@@ -15,12 +15,13 @@ require 'src/constants'
 -- classes
 require 'src/Board'
 require 'src/Piece'
+require 'src/Button'
 
 -- states
 require 'src/states/BaseState'
 require 'src/states/GameOverState'
 require 'src/states/PlayState'
-require 'src/states/StartState'
+require 'src/states/MenuState'
 
 -- load in sounds
 gSounds = {}
