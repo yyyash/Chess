@@ -114,15 +114,30 @@ function PlayState:render()
     if self.board:hasCheck() and self.checkmate == false then
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.setFont(gFonts['small'])
-        love.graphics.printf(self.turn .. ' is in check', 1, 13, VIRTUAL_WIDTH, 'center')
-    end
+        love.graphics.printf(self.turn .. ' is in check', 0, 13, VIRTUAL_WIDTH, 'center')
 
     -- writes checkmate and player who won at the top of the screen
-    if self.checkmate then
+    elseif self.checkmate then
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.setFont(gFonts['small'])
-        love.graphics.printf('Checkmate - ' .. self.winner .. ' wins', 1, 13, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('Checkmate - ' .. self.winner .. ' wins', 0, 13, VIRTUAL_WIDTH, 'center')
+
+    -- writes who's turn it is
+    else
+        -- text border
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setFont(gFonts['small'])
+        love.graphics.printf(self.turn .. ' to move', 1, 13, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf(self.turn .. ' to move', -1, 13, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf(self.turn .. ' to move', 0, 14, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf(self.turn .. ' to move', 0, 12, VIRTUAL_WIDTH, 'center')
+
+        -- text
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.printf(self.turn .. ' to move', 0, 13, VIRTUAL_WIDTH, 'center')
     end
+
+
 end
 
 -- click in bounds
@@ -144,9 +159,6 @@ function PlayState:clickToGrid(x , y)
     -- get the board grid values of the mouse click
     return math.floor((x - BOARD_OFFSET_X) / TILE_SIZE) + 1, math.floor((y - BOARD_OFFSET_Y) / TILE_SIZE) + 1
 end
--- legal move clicked
--- return gridX, gridY of legal move clicked
--- return 0, 0 if 
 
 -- change turns
 function PlayState:changeTurns()

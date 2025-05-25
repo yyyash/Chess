@@ -205,7 +205,7 @@ function Board:resetCheck(color)
 end
 
 --[[
-    knight legal moves code
+    knight moves
 ]]
 function Board:knightMoves(piece)
     local legalMoves = {}
@@ -232,7 +232,7 @@ function Board:knightMoves(piece)
 end
 
 --[[
-    pawn legal moves code
+    pawn moves
 ]]
 function Board:pawnMoves(piece)
     local possibleMoves = {}
@@ -306,7 +306,7 @@ function Board:pawnMoves(piece)
 end
 
 --[[
-    bishop legal moves code
+    bishop moves
 ]]
 function Board:bishopMoves(piece)
     local legalMoves = {}
@@ -396,7 +396,7 @@ function Board:bishopMoves(piece)
 end
 
 --[[
-    rook legal moves code
+    rook moves
 ]]
 function Board:rookMoves(piece)
     local legalMoves = {}
