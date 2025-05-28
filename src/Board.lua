@@ -120,7 +120,6 @@ function Board:getMoves(piece)
     elseif piece.pieceType == 'queen' then
         return TableConcat(self:bishopMoves(piece), self:rookMoves(piece))
 
-    -- still needs castling
     elseif piece.pieceType == 'king' then
         return self:kingMoves(piece)
     end
@@ -727,7 +726,7 @@ function Board:getKingPos(color)
 end
 
 --[[
-    gets the opposite color of a piece
+    returns the opposite color of a piece
 ]]
 function Board:getOppColor(piece)
     if piece.color == 'white' then return 'black'
@@ -746,4 +745,36 @@ function Board:oppAttack(x, y, moves)
     end
     -- if we got here, the x,y is not being attacked
     return false
+end
+
+--[[
+    tallys up board material difference
+    returns whites piece values - blacks piece values
+]]
+function Board:materialDifference()
+    local total_value = 0
+    for i = 1, #self.pieces do
+        if self.pieces[i].color == 'white' then
+            if self.pieces[i].pieceType == 'pawn' then
+                total_value = total_value + 1
+            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
+                total_value = total_value + 3
+            elseif self.pieces[i].pieceType == 'rook' then
+                total_value = total_value + 5
+            elseif self.pieces[i].pieceType == 'queen' then
+                total_value = total_value + 9
+            end
+        else
+            if self.pieces[i].pieceType == 'pawn' then
+                total_value = total_value - 1
+            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
+                total_value = total_value - 3
+            elseif self.pieces[i].pieceType == 'rook' then
+                total_value = total_value - 5
+            elseif self.pieces[i].pieceType == 'queen' then
+                total_value = total_value - 9
+            end
+        end
+    end
+    return total_value
 end

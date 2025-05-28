@@ -14,6 +14,14 @@ function PlayState:init()
     self.allMoves = {}
     self.checkmate = false
     self.winner = 'no winner'
+
+    self.buttons = {}
+    table.insert(self.buttons, Button('home', function() gStateMachine:change('menu') end, 'play'))
+    table.insert(self.buttons, Button('restart', function() self:init() end, 'play'))
+
+    self.button_margin = 5
+
+    self.takenPieces = {}
 end
 
 --[[ function PlayState:enter(params)
@@ -64,6 +72,10 @@ function PlayState:update(dt)
 
                 -- if there is a piece on this square and its a different color, take it
                 if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false and self.board:pieceColor(self.selectedGridX, self.selectedGridY) ~= self.selectedPiece.color then
+                    table.insert(self.takenPieces, { 
+                        ['piece_color'] = self.board:pieceColor(self.selectedGridX, self.selectedGridY), 
+                        ['piece_type'] = self.board:pieceType(self.selectedGridX, self.selectedGridY)
+                    })
                     self.board:takePiece(self.selectedGridX, self.selectedGridY)
                 end
 
@@ -110,34 +122,7 @@ function PlayState:render()
         end
     end
 
-    -- writes who is in check at the top of the screen
-    if self.board:hasCheck() and self.checkmate == false then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.setFont(gFonts['small'])
-        love.graphics.printf(self.turn .. ' is in check', 0, 13, VIRTUAL_WIDTH, 'center')
-
-    -- writes checkmate and player who won at the top of the screen
-    elseif self.checkmate then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.setFont(gFonts['small'])
-        love.graphics.printf('Checkmate - ' .. self.winner .. ' wins', 0, 13, VIRTUAL_WIDTH, 'center')
-
-    -- writes who's turn it is
-    else
-        -- text border
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.setFont(gFonts['small'])
-        love.graphics.printf(self.turn .. ' to move', 1, 13, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf(self.turn .. ' to move', -1, 13, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf(self.turn .. ' to move', 0, 14, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf(self.turn .. ' to move', 0, 12, VIRTUAL_WIDTH, 'center')
-
-        -- text
-        love.graphics.setColor(0, 0, 0, 1)
-        love.graphics.printf(self.turn .. ' to move', 0, 13, VIRTUAL_WIDTH, 'center')
-    end
-
-
+    self:renderUI()
 end
 
 -- click in bounds
@@ -189,9 +174,17 @@ function PlayState:makeMove(move)
     elseif move['enPassantTake'] then
         -- check if en passant piece is above
         if self.board:checkEnPassant(move['gridX'], move['gridY'] + 1) then
+            table.insert(self.takenPieces, { 
+                ['piece_color'] = self.board:pieceColor(move['gridX'], move['gridY'] + 1), 
+                ['piece_type'] = self.board:pieceType(move['gridX'], move['gridY'] + 1)
+            })
             self.board:takePiece(move['gridX'], move['gridY'] + 1)
         -- check if en passant piece is below
         elseif self.board:checkEnPassant(move['gridX'], move['gridY'] - 1) then
+            table.insert(self.takenPieces, { 
+                ['piece_color'] = self.board:pieceColor(move['gridX'], move['gridY'] - 1), 
+                ['piece_type'] = self.board:pieceType(move['gridX'], move['gridY'] - 1)
+            })
             self.board:takePiece(move['gridX'], move['gridY'] - 1)
         end
 
@@ -422,5 +415,178 @@ function PlayState:checkMate(color)
     else
         print(color .. ' has ' .. #allLegalMoves .. ' legal moves')
         return false
+    end
+end
+
+--[[
+    One big ugly place for all the UI elements
+]]
+function PlayState:renderUI()
+        -- buttons
+    for i, button in ipairs(self.buttons) do 
+        button:render( ( i - 1) * (PLAY_BUTTON_WIDTH + self.button_margin) + 5, 5)
+    end
+
+    -- writes who is in check at the top of the screen
+    love.graphics.setFont(gFonts['small'])
+    if self.board:hasCheck() and self.checkmate == false then
+        if self.turn == 'white' then
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf('White is in check', 0, 13, VIRTUAL_WIDTH, 'center')
+        else
+            -- text border
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf('Black is in check', 1, 13, VIRTUAL_WIDTH, 'center')
+            love.graphics.printf('Black is in check', -1, 13, VIRTUAL_WIDTH, 'center')
+            love.graphics.printf('Black is in check', 0, 14, VIRTUAL_WIDTH, 'center')
+            love.graphics.printf('Black is in check', 0, 12, VIRTUAL_WIDTH, 'center')
+
+            -- text
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.printf('Black is in check', 0, 13, VIRTUAL_WIDTH, 'center')
+        end
+
+    -- writes checkmate and player who won at the top of the screen
+    elseif self.checkmate then
+        if self.turn == 'black' then
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf('Checkmate - White wins', 0, 13, VIRTUAL_WIDTH, 'center')
+        else
+            -- text border
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf('Checkmate - Black wins', 1, 13, VIRTUAL_WIDTH, 'center')
+            love.graphics.printf('Checkmate - Black wins', -1, 13, VIRTUAL_WIDTH, 'center')
+            love.graphics.printf('Checkmate - Black wins', 0, 14, VIRTUAL_WIDTH, 'center')
+            love.graphics.printf('Checkmate - Black wins', 0, 12, VIRTUAL_WIDTH, 'center')
+
+            -- text
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.printf('Checkmate - Black wins', 0, 13, VIRTUAL_WIDTH, 'center')
+        end
+
+    -- writes who's turn it is
+    else
+        if self.turn == 'white' then
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf('White to move', 0, 13, VIRTUAL_WIDTH, 'center')
+        else
+            -- text border
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf('Black to move', 1, 13, VIRTUAL_WIDTH, 'center')
+            love.graphics.printf('Black to move', -1, 13, VIRTUAL_WIDTH, 'center')
+            love.graphics.printf('Black to move', 0, 14, VIRTUAL_WIDTH, 'center')
+            love.graphics.printf('Black to move', 0, 12, VIRTUAL_WIDTH, 'center')
+
+            -- text
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.printf('Black to move', 0, 13, VIRTUAL_WIDTH, 'center')
+        end
+    end
+
+    -- pieces taken ui
+    -- draw headers
+    -- white
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setFont(gFonts['medium'])
+    love.graphics.printf('White', 0, 40, BOARD_OFFSET_X - 16, 'center')
+    -- black
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf('Black', BOARD_OFFSET_X + 33, 40, VIRTUAL_WIDTH, 'center')
+    love.graphics.printf('Black', BOARD_OFFSET_X + 31, 40, VIRTUAL_WIDTH, 'center')
+    love.graphics.printf('Black', BOARD_OFFSET_X + 32, 41, VIRTUAL_WIDTH, 'center')
+    love.graphics.printf('Black', BOARD_OFFSET_X + 32, 39, VIRTUAL_WIDTH, 'center')
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.printf('Black', BOARD_OFFSET_X + 32, 40, VIRTUAL_WIDTH, 'center')
+
+    local cursor_w_pawn = TAKEN_PIECES_W_START
+    local cursor_w_knight = TAKEN_PIECES_W_START
+    local cursor_w_bishop = TAKEN_PIECES_W_START + TILE_SIZE * 1.5
+    local cursor_w_rook = TAKEN_PIECES_W_START
+    local cursor_w_queen = TAKEN_PIECES_W_START + TILE_SIZE * 1.5
+
+    local cursor_b_pawn = TAKEN_PIECES_B_START
+    local cursor_b_knight = TAKEN_PIECES_B_START
+    local cursor_b_bishop = TAKEN_PIECES_B_START + TILE_SIZE * 1.5
+    local cursor_b_rook = TAKEN_PIECES_B_START
+    local cursor_b_queen = TAKEN_PIECES_B_START + TILE_SIZE * 1.5
+
+    local pawn_y = PAWN_Y_START
+    local knights_bishops_y = pawn_y + 37
+    local rooks_queens_y = knights_bishops_y + 37
+
+    for i = 1, #self.takenPieces do
+        love.graphics.setColor(1, 1, 1, 1)
+        -- draw taken pieces (white)
+        if self.takenPieces[i]['piece_color'] == 'white' then
+
+            if self.takenPieces[i]['piece_type'] == 'pawn' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][WHITE_PAWN], cursor_w_pawn, pawn_y)
+                cursor_w_pawn = cursor_w_pawn + 10
+
+            elseif self.takenPieces[i]['piece_type'] == 'knight' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][WHITE_KNIGHT], cursor_w_knight, knights_bishops_y)
+                cursor_w_knight = cursor_w_knight + 10
+
+            elseif self.takenPieces[i]['piece_type'] == 'bishop' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][WHITE_BISHOP], cursor_w_bishop, knights_bishops_y)
+                cursor_w_bishop = cursor_w_bishop + 10
+
+            elseif self.takenPieces[i]['piece_type'] == 'rook' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][WHITE_ROOK], cursor_w_rook, rooks_queens_y)
+                cursor_w_rook = cursor_w_rook + 10
+
+            elseif self.takenPieces[i]['piece_type'] == 'queen' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][WHITE_QUEEN], cursor_w_queen, rooks_queens_y)
+                cursor_w_queen = cursor_w_queen + 10
+            end
+
+        -- draw taken pieces (Black)
+        else
+
+            if self.takenPieces[i]['piece_type'] == 'pawn' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][BLACK_PAWN], cursor_b_pawn, pawn_y)
+                cursor_b_pawn = cursor_b_pawn + 10
+
+            elseif self.takenPieces[i]['piece_type'] == 'knight' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][BLACK_KNIGHT], cursor_b_knight, knights_bishops_y)
+                cursor_b_knight = cursor_b_knight + 10
+
+            elseif self.takenPieces[i]['piece_type'] == 'bishop' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][BLACK_BISHOP], cursor_b_bishop, knights_bishops_y)
+                cursor_b_bishop = cursor_b_bishop + 10
+
+            elseif self.takenPieces[i]['piece_type'] == 'rook' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][BLACK_ROOK], cursor_b_rook, rooks_queens_y)
+                cursor_b_rook = cursor_b_rook + 10
+
+            elseif self.takenPieces[i]['piece_type'] == 'queen' then
+                love.graphics.draw(gTextures['assets'], gFrames['pieces'][BLACK_QUEEN], cursor_b_queen, rooks_queens_y)
+                cursor_b_queen = cursor_b_queen + 10
+            end
+
+        end
+    end
+
+    -- draw material difference under piece graveyard
+    local material_difference = self.board:materialDifference()
+    love.graphics.setFont(gFonts['medium'])
+
+    -- white is ahead
+    if material_difference > 0 then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf('+ ' .. tostring(math.abs(material_difference)), 0, 220, BOARD_OFFSET_X - 16, 'center')
+
+    -- black is ahead
+    elseif material_difference < 0 then
+    -- text border
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf('+ ' .. tostring(math.abs(material_difference)), BOARD_OFFSET_X + 31, 220, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('+ ' .. tostring(math.abs(material_difference)), BOARD_OFFSET_X + 33, 220, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('+ ' .. tostring(math.abs(material_difference)), BOARD_OFFSET_X + 32, 221, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('+ ' .. tostring(math.abs(material_difference)), BOARD_OFFSET_X + 32, 219, VIRTUAL_WIDTH, 'center')
+
+        -- text
+        love.graphics.setColor(0, 0, 0, 1)
+        love.graphics.printf('+ ' .. tostring(math.abs(material_difference)), BOARD_OFFSET_X + 32, 220, VIRTUAL_WIDTH, 'center')
     end
 end

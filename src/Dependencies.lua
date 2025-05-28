@@ -28,7 +28,8 @@ gSounds = {}
 
 -- load in sprite sheet
 gTextures = {
-    ['assets'] = love.graphics.newImage('graphics/chess.png')
+    ['assets'] = love.graphics.newImage('graphics/chess.png'),
+    ['ui_buttons'] = love.graphics.newImage('graphics/button_ui.png')
 }
 
 -- parse through sprite sheet
@@ -49,7 +50,10 @@ gFrames = {
     ['left_border'] = love.graphics.newQuad(0, 176, 16, 64, gTextures['assets']:getDimensions()),
     ['right_border'] = love.graphics.newQuad(80, 176, 16, 64, gTextures['assets']:getDimensions()),
     ['top_border'] = love.graphics.newQuad(16, 160, 64, 16, gTextures['assets']:getDimensions()),
-    ['bottom_border'] = love.graphics.newQuad(16, 240, 64, 16, gTextures['assets']:getDimensions())
+    ['bottom_border'] = love.graphics.newQuad(16, 240, 64, 16, gTextures['assets']:getDimensions()),
+
+    -- ui buttons
+    ['ui_buttons'] = GenerateQuads(gTextures['ui_buttons'], 16, 16)
 }
 
 gFonts = {
