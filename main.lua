@@ -28,7 +28,9 @@ function love.load()
     -- initialize state machine
     gStateMachine = StateMachine {
     ['menu'] = function() return MenuState() end,
-    ['play'] = function() return PlayState() end,
+    ['color_select'] = function() return ColorSelectState() end,
+    ['one_player'] = function() return OnePlayerState() end,
+    ['two_player'] = function() return TwoPlayerState() end,
     ['game-over'] = function() return GameOverState() end
     }
     gStateMachine:change('menu')
@@ -64,10 +66,10 @@ function love.draw()
 
     gStateMachine:render()
 
---[[     -- print fps
+    -- print fps
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setFont(gFonts['small'])
-    love.graphics.printf('FPS: ' .. tostring(love.timer.getFPS()), 1, 1, VIRTUAL_WIDTH, 'left') ]]
+    love.graphics.printf('FPS: ' .. tostring(love.timer.getFPS()), 5, VIRTUAL_HEIGHT - 16, VIRTUAL_WIDTH, 'left')
 
     push:finish()
 end

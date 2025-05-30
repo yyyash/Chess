@@ -4,24 +4,39 @@
 
 Button = Class{}
 
-function Button:init(text, fn, bt)
+function Button:init(text, bt, fn)
     self.text = text
-    self.fn = fn
     -- button type
     self.bt = bt
-
+    -- button function
+    self.fn = fn
+    
     if self.bt == 'menu' then
         self.width = MENU_BUTTON_WIDTH
         self.height = MENU_BUTTON_HEIGHT
+        self.delay = 5
 
     elseif self.bt == 'play' then
         self.width = PLAY_BUTTON_WIDTH
         self.height = PLAY_BUTTON_HEIGHT
+        self.delay = 0
     end
 
     -- so we execute button function only one time when button is clicked
     self.now = false
     self.last = false
+end
+
+--[[
+    prevents input bleeding by delaying functionality of buttons
+    decrements delay value each time update is called
+]]
+function Button:update(dt)
+
+    if self.delay > 0 then
+        self.delay = self.delay - 1
+    end
+
 end
 
 function Button:render(x, y)
@@ -40,7 +55,7 @@ function Button:render(x, y)
     local mx, my = push:toGame(love.mouse.getPosition())
 
     -- button is hot if the mouse is hovering over it
-    if mx ~= nil and my ~= nil then
+    if mx ~= nil and my ~= nil and self.delay == 0 then
         hot = mx > bx and mx < bx + self.width and
                 my > by and my < by + self.height
     end

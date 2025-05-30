@@ -4,57 +4,109 @@
 
 Board = Class{}
 
-function Board:init()
+function Board:init(p1_color)
     -- table of all pieces on the board
     self.pieces = {}
 
     -- generate pieces for new game
+    -- player 1 is white
+    if p1_color == 'white' then
 
-    -- white pawns
-    for i = 1, 8 do
-        table.insert(self.pieces, Piece(i, 7, 'white', 'pawn', WHITE_PAWN, 1))     
+        -- white pawns
+        for i = 1, 8 do
+            table.insert(self.pieces, Piece(i, 7, 'white', 'pawn', WHITE_PAWN, 1))     
+        end
+
+        -- white rooks
+        table.insert(self.pieces, Piece(1, 8, 'white', 'rook', WHITE_ROOK, 1))
+        table.insert(self.pieces, Piece(8, 8, 'white', 'rook', WHITE_ROOK, 1))
+
+        -- white knights
+        table.insert(self.pieces, Piece(2, 8, 'white', 'knight', WHITE_KNIGHT, 1))
+        table.insert(self.pieces, Piece(7, 8, 'white', 'knight', WHITE_KNIGHT, 1))
+
+        -- white bishops
+        table.insert(self.pieces, Piece(3, 8, 'white', 'bishop', WHITE_BISHOP, 1))
+        table.insert(self.pieces, Piece(6, 8, 'white', 'bishop', WHITE_BISHOP, 1))
+
+        -- white queen
+        table.insert(self.pieces, Piece(4, 8, 'white', 'queen', WHITE_QUEEN, 1))
+
+        -- white king
+        table.insert(self.pieces, Piece(5, 8, 'white', 'king', WHITE_KING, 1))
+
+        -- black pawns
+        for i = 1, 8 do
+            table.insert(self.pieces, Piece(i, 2, 'black', 'pawn', BLACK_PAWN, 2))     
+        end
+
+        -- black rooks
+        table.insert(self.pieces, Piece(1, 1, 'black', 'rook', BLACK_ROOK, 2))
+        table.insert(self.pieces, Piece(8, 1, 'black', 'rook', BLACK_ROOK, 2))
+
+        -- black knights
+        table.insert(self.pieces, Piece(2, 1, 'black', 'knight', BLACK_KNIGHT, 2))
+        table.insert(self.pieces, Piece(7, 1, 'black', 'knight', BLACK_KNIGHT, 2))
+
+        -- black bishops
+        table.insert(self.pieces, Piece(3, 1, 'black', 'bishop', BLACK_BISHOP, 2))
+        table.insert(self.pieces, Piece(6, 1, 'black', 'bishop', BLACK_BISHOP, 2))
+
+        -- black queen
+        table.insert(self.pieces, Piece(4, 1, 'black', 'queen', BLACK_QUEEN, 2))
+
+        -- black king
+        table.insert(self.pieces, Piece(5, 1, 'black', 'king', BLACK_KING, 2))
+
+    -- player 1 is black
+    else
+
+        -- black pawns
+        for i = 1, 8 do
+            table.insert(self.pieces, Piece(i, 7, 'black', 'pawn', BLACK_PAWN, 1))     
+        end
+
+        -- black rooks
+        table.insert(self.pieces, Piece(1, 8, 'black', 'rook', BLACK_ROOK, 1))
+        table.insert(self.pieces, Piece(8, 8, 'black', 'rook', BLACK_ROOK, 1))
+
+        -- black knights
+        table.insert(self.pieces, Piece(2, 8, 'black', 'knight', BLACK_KNIGHT, 1))
+        table.insert(self.pieces, Piece(7, 8, 'black', 'knight', BLACK_KNIGHT, 1))
+
+        -- black bishops
+        table.insert(self.pieces, Piece(3, 8, 'black', 'bishop', BLACK_BISHOP, 1))
+        table.insert(self.pieces, Piece(6, 8, 'black', 'bishop', BLACK_BISHOP, 1))
+
+        -- black queen
+        table.insert(self.pieces, Piece(5, 8, 'black', 'queen', BLACK_QUEEN, 1))
+
+        -- black king
+        table.insert(self.pieces, Piece(4, 8, 'black', 'king', BLACK_KING, 1))
+
+        -- white pawns
+        for i = 1, 8 do
+            table.insert(self.pieces, Piece(i, 2, 'white', 'pawn', WHITE_PAWN, 2))     
+        end
+
+        -- white rooks
+        table.insert(self.pieces, Piece(1, 1, 'white', 'rook', WHITE_ROOK, 2))
+        table.insert(self.pieces, Piece(8, 1, 'white', 'rook', WHITE_ROOK, 2))
+
+        -- white knights
+        table.insert(self.pieces, Piece(2, 1, 'white', 'knight', WHITE_KNIGHT, 2))
+        table.insert(self.pieces, Piece(7, 1, 'white', 'knight', WHITE_KNIGHT, 2))
+
+        -- white bishops
+        table.insert(self.pieces, Piece(3, 1, 'white', 'bishop', WHITE_BISHOP, 2))
+        table.insert(self.pieces, Piece(6, 1, 'white', 'bishop', WHITE_BISHOP, 2))
+
+        -- white queen
+        table.insert(self.pieces, Piece(5, 1, 'white', 'queen', WHITE_QUEEN, 2))
+
+        -- white king
+        table.insert(self.pieces, Piece(4, 1, 'white', 'king', WHITE_KING, 2))
     end
-
-    -- white rooks
-    table.insert(self.pieces, Piece(1, 8, 'white', 'rook', WHITE_ROOK, 1))
-    table.insert(self.pieces, Piece(8, 8, 'white', 'rook', WHITE_ROOK, 1))
-
-    -- white knights
-    table.insert(self.pieces, Piece(2, 8, 'white', 'knight', WHITE_KNIGHT, 1))
-    table.insert(self.pieces, Piece(7, 8, 'white', 'knight', WHITE_KNIGHT, 1))
-
-    -- white bishops
-    table.insert(self.pieces, Piece(3, 8, 'white', 'bishop', WHITE_BISHOP, 1))
-    table.insert(self.pieces, Piece(6, 8, 'white', 'bishop', WHITE_BISHOP, 1))
-
-    -- white queen
-    table.insert(self.pieces, Piece(4, 8, 'white', 'queen', WHITE_QUEEN, 1))
-
-    -- white king
-    table.insert(self.pieces, Piece(5, 8, 'white', 'king', WHITE_KING, 1))
-
-    -- black pawns
-    for i = 1, 8 do
-        table.insert(self.pieces, Piece(i, 2, 'black', 'pawn', BLACK_PAWN, 2))     
-    end
-
-    -- black rooks
-    table.insert(self.pieces, Piece(1, 1, 'black', 'rook', BLACK_ROOK, 2))
-    table.insert(self.pieces, Piece(8, 1, 'black', 'rook', BLACK_ROOK, 2))
-
-    -- black knights
-    table.insert(self.pieces, Piece(2, 1, 'black', 'knight', BLACK_KNIGHT, 2))
-    table.insert(self.pieces, Piece(7, 1, 'black', 'knight', BLACK_KNIGHT, 2))
-
-    -- black bishops
-    table.insert(self.pieces, Piece(3, 1, 'black', 'bishop', BLACK_BISHOP, 2))
-    table.insert(self.pieces, Piece(6, 1, 'black', 'bishop', BLACK_BISHOP, 2))
-
-    -- black queen
-    table.insert(self.pieces, Piece(4, 1, 'black', 'queen', BLACK_QUEEN, 2))
-
-    -- black king
-    table.insert(self.pieces, Piece(5, 1, 'black', 'king', BLACK_KING, 2))
     
 end
 

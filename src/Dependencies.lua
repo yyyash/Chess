@@ -21,7 +21,10 @@ require 'src/Button'
 require 'src/states/BaseState'
 require 'src/states/GameOverState'
 require 'src/states/PlayState'
+require 'src/states/OnePlayerState'
+require 'src/states/TwoPlayerState'
 require 'src/states/MenuState'
+require 'src/states/ColorSelectState'
 
 -- load in sounds
 gSounds = {}
