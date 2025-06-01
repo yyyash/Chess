@@ -106,24 +106,51 @@ function PlayState:makeMove(move)
             })
             self.board:takePiece(move['gridX'], move['gridY'] - 1)
         end
+    end
+    
+    -- white on bottom
+    if self.p1_color == 'white' then
+        -- castle short
+        if move['castleRight'] then
+            for i = 1, #self.board.pieces do
+                -- find the rook to the right of the selected king
+                if self.board.pieces[i].gridX == self.selectedPiece.gridX + 3 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                    -- move the rook 1 square to the right of the selected king
+                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX + 1, self.selectedPiece.gridY)
+                end
+            end
 
-    -- castle right
-    elseif move['castleRight'] then
-        for i = 1, #self.board.pieces do
-            -- find the rook to the right of the selected king
-            if self.board.pieces[i].gridX == self.selectedPiece.gridX + 3 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
-                -- move the rook 1 square to the right of the selected king
-                self.board.pieces[i]:moveTo(self.selectedPiece.gridX + 1, self.selectedPiece.gridY)
+        -- castle long
+        elseif move['castleLeft'] then
+            for i = 1, #self.board.pieces do
+                -- find the rook to the left of the selected king
+                if self.board.pieces[i].gridX == self.selectedPiece.gridX - 4 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                    -- move the rook 2 squares to the left of the selected king
+                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX - 1, self.selectedPiece.gridY)
+                end
             end
         end
 
-    -- castle left
-    elseif move['castleLeft'] then
-        for i = 1, #self.board.pieces do
-            -- find the rook to the left of the selected king
-            if self.board.pieces[i].gridX == self.selectedPiece.gridX - 4 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
-                -- move the rook 2 squares to the left of the selected king
-                self.board.pieces[i]:moveTo(self.selectedPiece.gridX - 2, self.selectedPiece.gridY)
+    -- black on bottom
+    else
+        -- castle long
+        if move['castleRight'] then
+            for i = 1, #self.board.pieces do
+                -- find the rook to the right of the selected king
+                if self.board.pieces[i].gridX == self.selectedPiece.gridX + 4 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                    -- move the rook 1 square to the right of the selected king
+                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX + 1, self.selectedPiece.gridY)
+                end
+            end
+
+        -- castle short
+        elseif move['castleLeft'] then
+            for i = 1, #self.board.pieces do
+                -- find the rook to the left of the selected king
+                if self.board.pieces[i].gridX == self.selectedPiece.gridX - 3 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                    -- move the rook 2 squares to the left of the selected king
+                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX - 1, self.selectedPiece.gridY)
+                end
             end
         end
     end

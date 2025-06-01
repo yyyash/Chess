@@ -7,6 +7,7 @@ Board = Class{}
 function Board:init(p1_color)
     -- table of all pieces on the board
     self.pieces = {}
+    self.p1_color = p1_color
 
     -- generate pieces for new game
     -- player 1 is white
@@ -563,42 +564,88 @@ function Board:kingMoves(piece)
     -- can only castle if king hasn't moved and is not in check
     if piece.firstMove == true and piece.inCheck == false then
         local emptySquareCount = 0
-        -- check to the right (3 squares only)
-        -- if there are 2 empty squares followed by a rook that hasn't moved, then castling is legal
-        for i = 1, 3 do
-            -- if its an empty square, increment the count
-            if self:emptySquare(piece.gridX + i, piece.gridY) then
-                emptySquareCount = emptySquareCount + 1
-            -- if we already found 2 empty squares
-            elseif emptySquareCount == 2 and 
-                -- and its a rook
-                self:pieceType(piece.gridX + i, piece.gridY) == 'rook' and 
-                -- and its the same color
-                piece.color == self:pieceColor(piece.gridX + i, piece.gridY) and
-                -- and that rook hasn't moved
-                self:pieceFirstMove(piece.gridX + i, piece.gridY) then
-                    -- king can castle, add right side castle to the legalmoves table
-                    table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true })
-            end
-        end
 
-        -- check to the left (4 squares only)
-        -- if there are 3 empty squares followed by a rook that hasn't moved, then castling is legal
-        emptySquareCount = 0
-        for i = 1, 4 do
-            -- if its an empty square, increment the count
-            if self:emptySquare(piece.gridX - i, piece.gridY) then
-                emptySquareCount = emptySquareCount + 1
-            -- if we already found 2 empty squares
-            elseif emptySquareCount == 3 and 
-                -- and its a rook
-                self:pieceType(piece.gridX - i, piece.gridY) == 'rook' and 
-                -- and its the same color
-                piece.color == self:pieceColor(piece.gridX - i, piece.gridY) and
-                -- and that rook hasn't moved
-                self:pieceFirstMove(piece.gridX - i, piece.gridY) then
-                    -- king can castle, add left side castle to the legalmoves table
-                    table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 1, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false })
+        -- white is on bottom (short castle right, long castle left)
+        if self.p1_color == 'white' then
+
+            -- check to the right (3 squares only)
+            -- if there are 2 empty squares followed by a rook that hasn't moved, then castling is legal
+            for i = 1, 3 do
+                -- if its an empty square, increment the count
+                if self:emptySquare(piece.gridX + i, piece.gridY) then
+                    emptySquareCount = emptySquareCount + 1
+                -- if we already found 2 empty squares
+                elseif emptySquareCount == 2 and 
+                    -- and its a rook
+                    self:pieceType(piece.gridX + i, piece.gridY) == 'rook' and 
+                    -- and its the same color
+                    piece.color == self:pieceColor(piece.gridX + i, piece.gridY) and
+                    -- and that rook hasn't moved
+                    self:pieceFirstMove(piece.gridX + i, piece.gridY) then
+                        -- king can castle, add right side castle to the legalmoves table
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true })
+                end
+            end
+
+            -- check to the left (4 squares only)
+            -- if there are 3 empty squares followed by a rook that hasn't moved, then castling is legal
+            emptySquareCount = 0
+            for i = 1, 4 do
+                -- if its an empty square, increment the count
+                if self:emptySquare(piece.gridX - i, piece.gridY) then
+                    emptySquareCount = emptySquareCount + 1
+                -- if we already found 2 empty squares
+                elseif emptySquareCount == 3 and 
+                    -- and its a rook
+                    self:pieceType(piece.gridX - i, piece.gridY) == 'rook' and 
+                    -- and its the same color
+                    piece.color == self:pieceColor(piece.gridX - i, piece.gridY) and
+                    -- and that rook hasn't moved
+                    self:pieceFirstMove(piece.gridX - i, piece.gridY) then
+                        -- king can castle, add left side castle to the legalmoves table
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 2, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false })
+                end
+            end
+
+         -- black is on bottom (short castle left, long castle right)    
+        else
+            -- check to the right (4 squares only)
+            -- if there are 3 empty squares followed by a rook that hasn't moved, then castling is legal
+            for i = 1, 4 do
+                -- if its an empty square, increment the count
+                if self:emptySquare(piece.gridX + i, piece.gridY) then
+                    emptySquareCount = emptySquareCount + 1
+                -- if we already found 3 empty squares
+                elseif emptySquareCount == 3 and 
+                    -- and its a rook
+                    self:pieceType(piece.gridX + i, piece.gridY) == 'rook' and 
+                    -- and its the same color
+                    piece.color == self:pieceColor(piece.gridX + i, piece.gridY) and
+                    -- and that rook hasn't moved
+                    self:pieceFirstMove(piece.gridX + i, piece.gridY) then
+                        -- king can castle, add right side castle to the legalmoves table
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 2, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true })
+                end
+            end
+
+            -- check to the left (3 squares only)
+            -- if there are 2 empty squares followed by a rook that hasn't moved, then castling is legal
+            emptySquareCount = 0
+            for i = 1, 3 do
+                -- if its an empty square, increment the count
+                if self:emptySquare(piece.gridX - i, piece.gridY) then
+                    emptySquareCount = emptySquareCount + 1
+                -- if we already found 2 empty squares
+                elseif emptySquareCount == 2 and 
+                    -- and its a rook
+                    self:pieceType(piece.gridX - i, piece.gridY) == 'rook' and 
+                    -- and its the same color
+                    piece.color == self:pieceColor(piece.gridX - i, piece.gridY) and
+                    -- and that rook hasn't moved
+                    self:pieceFirstMove(piece.gridX - i, piece.gridY) then
+                        -- king can castle, add left side castle to the legalmoves table
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 1, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false })
+                end
             end
         end
     end
