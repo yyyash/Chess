@@ -209,17 +209,14 @@ function PlayState:setCheck()
     self.allMoves = self.board:getAllMoves(self.turn)
     
     -- look for check on the opposing player and set check on the opposing king
-    self:changeTurns()
-    if self.board:getCheck(self.turn, self.allMoves) then
-        self.board:setCheck(self.turn)
+    if self.board:getCheck(self:getOppTurn(), self.allMoves) then
+        self.board:setCheck(self:getOppTurn())
     end
 
     -- reset check if we just moved to protect the king
     self.allMoves = {}
-    self.allMoves = self.board:getAllMoves(self.turn)
+    self.allMoves = self.board:getAllMoves(self:getOppTurn())
 
-    -- change turns to look at our own check status
-    self:changeTurns()
     if self.board:getCheck(self.turn, self.allMoves) == false then
         self.board:resetCheck(self.turn)
     else
@@ -243,7 +240,7 @@ function PlayState:getLegalMoves(piece)
     --print(self.turn .. ' got ' .. #moves .. ' moves from the getMoves function')
     local legalMoves = {}
     local opponentsMoves = {}
-    local opponentsColor = self.board:oppColor(piece.color)
+    local opponentsColor = self.board:getOppColor(piece)
     local tempPiece = {}
     local tempPieceIndex = 0
     local pieceRemoved = false
@@ -264,9 +261,7 @@ function PlayState:getLegalMoves(piece)
         if moves[i]['castleRight'] then
             -- check if the square to the right is being attacked
             -- change turn to get opponents moves
-            self:changeTurns()
-            opponentsMoves = self.board:getAllMoves(self.turn)
-            self:changeTurns()
+            opponentsMoves = self.board:getAllMoves(opponentsColor)
 
             for j = 1, #opponentsMoves do
                 if opponentsMoves[j]['gridX'] == piece.gridX + 1 and opponentsMoves[j]['gridY'] == piece.gridY then
@@ -276,9 +271,7 @@ function PlayState:getLegalMoves(piece)
         elseif moves[i]['castleLeft'] then
             -- check if any of the two squares to the left are being attacked
             -- change turn to get opponents moves
-            self:changeTurns()
-            opponentsMoves = self.board:getAllMoves(self.turn)
-            self:changeTurns()
+            opponentsMoves = self.board:getAllMoves(opponentsColor)
 
             for j = 1, #opponentsMoves do
                 if opponentsMoves[j]['gridX'] == piece.gridX - 1 and opponentsMoves[j]['gridY'] == piece.gridY then
@@ -307,14 +300,12 @@ function PlayState:getLegalMoves(piece)
         piece.gridX = moves[i]['gridX']
         piece.gridY = moves[i]['gridY']
 
-        -- change turn to get opponents moves
-        self:changeTurns()
-        opponentsMoves = self.board:getAllMoves(self.turn)
-        self:changeTurns()
+        -- get opponents moves
+        opponentsMoves = self.board:getAllMoves(opponentsColor)
 
         -- look for check on current turn using all of the opponents moves
         -- if this is false, then this move is legal, add it to the table
-        if self.board:getCheck(self.turn, opponentsMoves) == false then
+        if self.board:getCheck(piece.color, opponentsMoves) == false then
             table.insert(legalMoves, moves[i])
         end
 
@@ -357,10 +348,11 @@ end
 function PlayState:checkMate(color)
     local allLegalMoves = self:getAllLegalMoves(color)
     if #allLegalMoves == 0 then
-        return true
+        self.checkmate = true
+        self.winner = self:getOppColor(color)
+        print('checkmate - ' .. self.winner .. ' wins')
     else
         print(color .. ' has ' .. #allLegalMoves .. ' legal moves')
-        return false
     end
 end
 
@@ -394,10 +386,10 @@ function PlayState:renderUI()
 
     -- writes checkmate and player who won at the top of the screen
     elseif self.checkmate then
-        if self.turn == 'black' then
+        if self.winner == 'white' then
             love.graphics.setColor(1, 1, 1, 1)
             love.graphics.printf('Checkmate - White wins', 0, 13, VIRTUAL_WIDTH, 'center')
-        else
+        elseif self.winner == 'black' then
             -- text border
             love.graphics.setColor(1, 1, 1, 1)
             love.graphics.printf('Checkmate - Black wins', 1, 13, VIRTUAL_WIDTH, 'center')
@@ -534,5 +526,27 @@ function PlayState:renderUI()
         -- text
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.printf('+ ' .. tostring(math.abs(material_difference)), BOARD_OFFSET_X + 32, 220, VIRTUAL_WIDTH, 'center')
+    end
+end
+
+--[[
+    return opposite turn's color
+]]
+function PlayState:getOppTurn()
+    if self.turn == 'white' then
+        return 'black'
+    else
+        return 'white'
+    end
+end
+
+--[[
+    returns the opposite color
+]]
+function PlayState:getOppColor(color)
+    if color == 'white' then
+        return 'black'
+    elseif color == 'black' then
+        return 'white'
     end
 end

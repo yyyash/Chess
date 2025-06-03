@@ -264,14 +264,14 @@ function Board:knightMoves(piece)
     local possibleMoves = {}
     possibleMoves = { 
         -- 8 possible moves for knight
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 2},
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 2},
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 2},
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 2},
-        { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY + 1},
-        { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY + 1},
-        { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY - 1},
-        { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY - 1}
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 2, ['piece'] = piece},
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 2, ['piece'] = piece},
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 2, ['piece'] = piece},
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 2, ['piece'] = piece},
+        { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY + 1, ['piece'] = piece},
+        { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY + 1, ['piece'] = piece},
+        { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY - 1, ['piece'] = piece},
+        { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY - 1, ['piece'] = piece}
     }
     -- only include moves that are inbounds and land on an opposite color piece or an empty square
     for i = 1, #possibleMoves do
@@ -293,19 +293,19 @@ function Board:pawnMoves(piece)
     if piece.player == 1 then
         -- 4 possible moves for bottom pawns
         possibleMoves = {
-            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
-            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
-            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
-            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false}
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
+            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
+            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece}
         }
     -- player 2 can only move +y
     else
         -- 4 possible moves for top pawns
         possibleMoves = {
-            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
-            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
-            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false},
-            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false}
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
+            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
+            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece}
         }
     end
     -- check if first forward move has an empty space and it is in bounds
@@ -371,11 +371,11 @@ function Board:bishopMoves(piece)
     while checkX <= 8 and checkY <= 8 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -391,11 +391,11 @@ function Board:bishopMoves(piece)
     while checkX <= 8 and checkY >= 1 do
     -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -411,11 +411,11 @@ function Board:bishopMoves(piece)
     while checkX >= 1 and checkY <= 8 do
     -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -431,11 +431,11 @@ function Board:bishopMoves(piece)
     while checkX >= 1 and checkY >= 1 do
     -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -459,11 +459,11 @@ function Board:rookMoves(piece)
     while checkX <= 8 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -478,11 +478,11 @@ function Board:rookMoves(piece)
     while checkX >= 1 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -498,11 +498,11 @@ function Board:rookMoves(piece)
     while checkY >= 1 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -517,11 +517,11 @@ function Board:rookMoves(piece)
     while checkY <= 8 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -539,17 +539,17 @@ function Board:kingMoves(piece)
     local legalMoves = {}
     local possibleMoves = {
         -- 8 possible moves for king
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false },
-        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false },
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false },
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
+        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
 
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false },
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false },
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
 
-        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false },
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false },
+        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
 
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false }
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece }
     }
 
     -- only include moves that are inbounds and land on an opposite color piece or an empty square
@@ -583,7 +583,7 @@ function Board:kingMoves(piece)
                     -- and that rook hasn't moved
                     self:pieceFirstMove(piece.gridX + i, piece.gridY) then
                         -- king can castle, add right side castle to the legalmoves table
-                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true })
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true, ['piece'] = piece })
                 end
             end
 
@@ -603,7 +603,7 @@ function Board:kingMoves(piece)
                     -- and that rook hasn't moved
                     self:pieceFirstMove(piece.gridX - i, piece.gridY) then
                         -- king can castle, add left side castle to the legalmoves table
-                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 2, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false })
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 2, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false, ['piece'] = piece })
                 end
             end
 
@@ -624,7 +624,7 @@ function Board:kingMoves(piece)
                     -- and that rook hasn't moved
                     self:pieceFirstMove(piece.gridX + i, piece.gridY) then
                         -- king can castle, add right side castle to the legalmoves table
-                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 2, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true })
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 2, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true, ['piece'] = piece })
                 end
             end
 
@@ -644,7 +644,7 @@ function Board:kingMoves(piece)
                     -- and that rook hasn't moved
                     self:pieceFirstMove(piece.gridX - i, piece.gridY) then
                         -- king can castle, add left side castle to the legalmoves table
-                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 1, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false })
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 1, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false, ['piece'] = piece })
                 end
             end
         end

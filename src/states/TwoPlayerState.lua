@@ -1,6 +1,6 @@
 --[[
     2 Player Game mode
-    Human player (Player 1) plays against Chess Bot (AI)
+    Player controls both sides
 ]]
 TwoPlayerState = Class{__includes = PlayState}
 
@@ -58,16 +58,9 @@ function TwoPlayerState:update(dt)
                 -- reset check if we moved to protect the king
                 self:setCheck()
 
-                -- change turns and look for checkmate
-                self:changeTurns()   
-                if self:checkMate(self.turn) then
-                    self:changeTurns()
-                    print('checkmate - ' .. self.turn .. ' wins')
-                    self.checkmate = true
-                    self.winner = self.turn
-                    self:changeTurns()
-                end               
-
+                -- look for checkmate
+                self:checkMate(self:getOppTurn())
+                self:changeTurns()
             end
 
             -- reset selected piece and legal moves
