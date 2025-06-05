@@ -218,9 +218,9 @@ end
     simple check
     loop through all pieces and return true if a king is in check
 ]]
-function Board:hasCheck()
+function Board:inCheck(color)
     for i = 1, #self.pieces do
-        if self.pieces[i].pieceType == 'king' and self.pieces[i].inCheck then
+        if self.pieces[i].pieceType == 'king' and self.pieces[i].color == color and self.pieces[i].inCheck  then
             return true
         end
     end

@@ -28,7 +28,7 @@ function TwoPlayerState:update(dt)
             if self.board:pieceColor(self.selectedGridX, self.selectedGridY) == self.turn then
                 self.selectedPiece = self.board:selectPiece(self.selectedGridX, self.selectedGridY)
                 -- get moves for piece clicked on
-                self.legalMoves = self:getLegalMoves(self.selectedPiece)
+                self.legalMoves = self:getLegalMoves(self.board, self.selectedPiece)
             end
         end
 
@@ -42,25 +42,20 @@ function TwoPlayerState:update(dt)
                 
                 self.moveIndex = self:getMoveIndex()
 
-                -- if there is a piece on this square and its a different color, take it
-                if self.board:emptySquare(self.selectedGridX, self.selectedGridY) == false and self.board:pieceColor(self.selectedGridX, self.selectedGridY) ~= self.selectedPiece.color then
-                    table.insert(self.takenPieces, { 
-                        ['piece_color'] = self.board:pieceColor(self.selectedGridX, self.selectedGridY), 
-                        ['piece_type'] = self.board:pieceType(self.selectedGridX, self.selectedGridY)
-                    })
-                    self.board:takePiece(self.selectedGridX, self.selectedGridY)
-                end
-
                 -- move the selected piece to the selected square
-                self:makeMove(self.legalMoves[self.moveIndex])
+                -- add any taken pieces to the graveyard
+                TableConcat(self.takenPieces, self:makeMove(self.board, self.legalMoves[self.moveIndex]))
 
-                -- set check if we put the opponent in check
-                -- reset check if we moved to protect the king
-                self:setCheck()
-
-                -- look for checkmate
-                self:checkMate(self:getOppTurn())
-                self:changeTurns()
+                -- check game over conditions
+                self.gameOverType = self:gameOver(self.board, self:getOppTurn())
+                -- look for gameover
+                if self.gameOverType == 'checkmate' then
+                    gStateMachine:change('game_over', { board = self.board, gameOverType = self.gameOverType, winner = self.turn, buttons = self.buttons})
+                elseif self.gameOverType == 'stalemate' then
+                    gStateMachine:change('game_over', { board = self.board, gameOverType = self.gameOverType, winner = '', buttons = self.buttons})
+                else
+                    self:changeTurns()
+                end
             end
 
             -- reset selected piece and legal moves
@@ -70,3 +65,4 @@ function TwoPlayerState:update(dt)
         end
     end
 end
+

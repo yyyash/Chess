@@ -13,8 +13,7 @@ function PlayState:enter(params)
     self.legalMoves = {}
     self.moveIndex = {}
     self.allMoves = {}
-    self.checkmate = false
-    self.winner = 'no winner'
+    self.gameOverType = ''
 
     self.buttons = {}
     table.insert(self.buttons, Button('home', 'play', function() gStateMachine:change('menu') end))
@@ -80,31 +79,41 @@ end
     moves selected piece to selected square
     resets en passant flag if not taken
     promotes pawns
+    returns a table of taken pieces to add to the graveyard
 ]]
-function PlayState:makeMove(move)
+function PlayState:makeMove(board, move)
+    local taken_pieces = {}
+    -- if there is a piece on this square and its a different color, take it
+    if board:emptySquare(move['gridX'], move['gridY']) == false and board:pieceColor(move['gridX'], move['gridY']) ~= move['piece'].color then
+        table.insert(taken_pieces, { 
+            ['piece_color'] = board:pieceColor(move['gridX'], move['gridY']), 
+            ['piece_type'] = board:pieceType(move['gridX'], move['gridY'])
+        })
+        board:takePiece(move['gridX'], move['gridY'])
+    end
     -- set piece values for the special cases of moves: en passant, castling, pawn promotion
     -- uses flags set in the moves table during move generation
 
     -- set the enPassantFlag if pawn first moved to an adjecent enemy pawn
     if move['triggersEnPassant'] then
-        self.board:setEnPassant(self.selectedPiece)
+        board:setEnPassant(move['piece'])
 
     -- take the pawn by en passant
     elseif move['enPassantTake'] then
         -- check if en passant piece is above
-        if self.board:checkEnPassant(move['gridX'], move['gridY'] + 1) then
-            table.insert(self.takenPieces, { 
-                ['piece_color'] = self.board:pieceColor(move['gridX'], move['gridY'] + 1), 
-                ['piece_type'] = self.board:pieceType(move['gridX'], move['gridY'] + 1)
+        if board:checkEnPassant(move['gridX'], move['gridY'] + 1) then
+            table.insert(taken_pieces, { 
+                ['piece_color'] = board:pieceColor(move['gridX'], move['gridY'] + 1), 
+                ['piece_type'] = board:pieceType(move['gridX'], move['gridY'] + 1)
             })
-            self.board:takePiece(move['gridX'], move['gridY'] + 1)
+            board:takePiece(move['gridX'], move['gridY'] + 1)
         -- check if en passant piece is below
-        elseif self.board:checkEnPassant(move['gridX'], move['gridY'] - 1) then
-            table.insert(self.takenPieces, { 
-                ['piece_color'] = self.board:pieceColor(move['gridX'], move['gridY'] - 1), 
-                ['piece_type'] = self.board:pieceType(move['gridX'], move['gridY'] - 1)
+        elseif board:checkEnPassant(move['gridX'], move['gridY'] - 1) then
+            table.insert(taken_pieces, { 
+                ['piece_color'] = board:pieceColor(move['gridX'], move['gridY'] - 1), 
+                ['piece_type'] = board:pieceType(move['gridX'], move['gridY'] - 1)
             })
-            self.board:takePiece(move['gridX'], move['gridY'] - 1)
+            board:takePiece(move['gridX'], move['gridY'] - 1)
         end
     end
     
@@ -112,21 +121,21 @@ function PlayState:makeMove(move)
     if self.p1_color == 'white' then
         -- castle short
         if move['castleRight'] then
-            for i = 1, #self.board.pieces do
+            for i = 1, #board.pieces do
                 -- find the rook to the right of the selected king
-                if self.board.pieces[i].gridX == self.selectedPiece.gridX + 3 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                if board.pieces[i].gridX == move['piece'].gridX + 3 and board.pieces[i].gridY == move['piece'].gridY and board.pieces[i].pieceType == 'rook' then
                     -- move the rook 1 square to the right of the selected king
-                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX + 1, self.selectedPiece.gridY)
+                    board.pieces[i]:moveTo(move['piece'].gridX + 1, move['piece'].gridY)
                 end
             end
 
         -- castle long
         elseif move['castleLeft'] then
-            for i = 1, #self.board.pieces do
+            for i = 1, #board.pieces do
                 -- find the rook to the left of the selected king
-                if self.board.pieces[i].gridX == self.selectedPiece.gridX - 4 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                if board.pieces[i].gridX == move['piece'].gridX - 4 and board.pieces[i].gridY == move['piece'].gridY and board.pieces[i].pieceType == 'rook' then
                     -- move the rook 2 squares to the left of the selected king
-                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX - 1, self.selectedPiece.gridY)
+                    board.pieces[i]:moveTo(move['piece'].gridX - 1, move['piece'].gridY)
                 end
             end
         end
@@ -135,46 +144,86 @@ function PlayState:makeMove(move)
     else
         -- castle long
         if move['castleRight'] then
-            for i = 1, #self.board.pieces do
+            for i = 1, #board.pieces do
                 -- find the rook to the right of the selected king
-                if self.board.pieces[i].gridX == self.selectedPiece.gridX + 4 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                if board.pieces[i].gridX == move['piece'].gridX + 4 and board.pieces[i].gridY == move['piece'].gridY and board.pieces[i].pieceType == 'rook' then
                     -- move the rook 1 square to the right of the selected king
-                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX + 1, self.selectedPiece.gridY)
+                    board.pieces[i]:moveTo(move['piece'].gridX + 1, move['piece'].gridY)
                 end
             end
 
         -- castle short
         elseif move['castleLeft'] then
-            for i = 1, #self.board.pieces do
+            for i = 1, #board.pieces do
                 -- find the rook to the left of the selected king
-                if self.board.pieces[i].gridX == self.selectedPiece.gridX - 3 and self.board.pieces[i].gridY == self.selectedPiece.gridY and self.board.pieces[i].pieceType == 'rook' then
+                if board.pieces[i].gridX == move['piece'].gridX - 3 and board.pieces[i].gridY == move['piece'].gridY and board.pieces[i].pieceType == 'rook' then
                     -- move the rook 2 squares to the left of the selected king
-                    self.board.pieces[i]:moveTo(self.selectedPiece.gridX - 1, self.selectedPiece.gridY)
+                    board.pieces[i]:moveTo(move['piece'].gridX - 1, move['piece'].gridY)
                 end
             end
         end
     end
 
     -- move the piece to the selected square
-    for i = 1, #self.board.pieces do
-        if self.board.pieces[i].isSelected then
-            self.board.pieces[i]:moveTo(self.selectedGridX, self.selectedGridY)
+    for i = 1, #board.pieces do
+        if board.pieces[i].isSelected then
+            board.pieces[i]:moveTo(move['gridX'], move['gridY'])
 
             -- if player 1 just moved and player 2 had an enPassant pawn, reset the enPassant flag
-            if self.board:enPassantColor() ~= nil and self.board:enPassantColor() ~= self.turn then
-                self.board:resetEnPassant()
+            if board:enPassantColor() ~= nil and board:enPassantColor() ~= move['piece'].color then
+                board:resetEnPassant()
+            end
 
             -- pawn promotion
-            elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 1 and self.turn == 'white' then
-                self.board.pieces[i].pieceType = 'queen'
-                self.board.pieces[i].tileID = WHITE_QUEEN
+            -- white on bottom
+            if self.p1_color == 'white' then
 
-            elseif self.board.pieces[i].pieceType == 'pawn' and self.board.pieces[i].gridY == 8 and self.turn == 'black' then
-                self.board.pieces[i].pieceType = 'queen'
-                self.board.pieces[i].tileID = BLACK_QUEEN
+                if board.pieces[i].pieceType == 'pawn' and board.pieces[i].gridY == 1 and move['piece'].color == 'white' then
+                    board.pieces[i].pieceType = 'queen'
+                    board.pieces[i].tileID = WHITE_QUEEN
+
+                elseif board.pieces[i].pieceType == 'pawn' and board.pieces[i].gridY == 8 and move['piece'].color == 'black' then
+                    board.pieces[i].pieceType = 'queen'
+                    board.pieces[i].tileID = BLACK_QUEEN
+                end
+
+            -- black on bottom
+            else
+
+                if board.pieces[i].pieceType == 'pawn' and board.pieces[i].gridY == 8 and move['piece'].color == 'white' then
+                    board.pieces[i].pieceType = 'queen'
+                    board.pieces[i].tileID = WHITE_QUEEN
+
+                elseif board.pieces[i].pieceType == 'pawn' and board.pieces[i].gridY == 1 and move['piece'].color == 'black' then
+                    board.pieces[i].pieceType = 'queen'
+                    board.pieces[i].tileID = BLACK_QUEEN
+                end
             end
         end
     end
+
+    -- sets check if move put opponent in check
+    -- resets check if move protected the king
+    local all_moves = board:getAllMoves(move['piece'].color)
+    -- look for check on the opposing player and set check on the opposing king
+    if board:getCheck(board:getOppColor(move['piece']), all_moves) then
+        board:setCheck(board:getOppColor(move['piece']))
+    end
+
+    -- reset check if we just moved to protect the king
+    all_moves = {}
+    all_moves = board:getAllMoves(board:getOppColor(move['piece']))
+
+    if board:getCheck(move['piece'].color, all_moves) == false then
+        board:resetCheck(move['piece'].color)
+    else
+        -- we just moved ourself into check, not legal, we should never get here
+        board:setCheck(move['piece'].color)
+        -- debug
+        print('shit is fucked up yo')
+    end
+
+    return taken_pieces
 end
 
 --[[
@@ -203,50 +252,20 @@ function PlayState:legalMoveSelected()
 end
 
 --[[
-    sets check as appropriate after a move has happened
-]]
-function PlayState:setCheck()
-    self.allMoves = self.board:getAllMoves(self.turn)
-    
-    -- look for check on the opposing player and set check on the opposing king
-    if self.board:getCheck(self:getOppTurn(), self.allMoves) then
-        self.board:setCheck(self:getOppTurn())
-    end
-
-    -- reset check if we just moved to protect the king
-    self.allMoves = {}
-    self.allMoves = self.board:getAllMoves(self:getOppTurn())
-
-    if self.board:getCheck(self.turn, self.allMoves) == false then
-        self.board:resetCheck(self.turn)
-    else
-        -- we just moved ourself into check, not legal, we should never get here
-        self.board:setCheck(self.turn)
-        -- debug
-        print('shit is fucked up yo')
-    end
-
-    self.allMoves = {}
-end
-
---[[
     gets the legal moves for a piece
     legal means the move cannot put the current turn in check
     returns a table of legal moves
 ]]
-function PlayState:getLegalMoves(piece)
+function PlayState:getLegalMoves(board, piece)
     -- this gets all of the possible moves for the currently selected piece
-    local moves = self.board:getMoves(piece)
-    --print(self.turn .. ' got ' .. #moves .. ' moves from the getMoves function')
+    local moves = board:getMoves(piece)
     local legalMoves = {}
     local opponentsMoves = {}
-    local opponentsColor = self.board:getOppColor(piece)
+    local opponentsColor = board:getOppColor(piece)
     local tempPiece = {}
     local tempPieceIndex = 0
     local pieceRemoved = false
-    -- save a copy of all of the pieces so we can reset after making moves
-    -- this does not work, going to have to copy the piece's data manually and if we take a piece I need to copy that and its index so it can be replaced
-    -- save a copy of the selectedGridX and selectedGridY for making moves
+    -- save a copy of the original piece position to move back later
     local pieceGridX = piece.gridX
     local pieceGridY = piece.gridY
 
@@ -261,7 +280,7 @@ function PlayState:getLegalMoves(piece)
         if moves[i]['castleRight'] then
             -- check if the square to the right is being attacked
             -- change turn to get opponents moves
-            opponentsMoves = self.board:getAllMoves(opponentsColor)
+            opponentsMoves = board:getAllMoves(opponentsColor)
 
             for j = 1, #opponentsMoves do
                 if opponentsMoves[j]['gridX'] == piece.gridX + 1 and opponentsMoves[j]['gridY'] == piece.gridY then
@@ -271,7 +290,7 @@ function PlayState:getLegalMoves(piece)
         elseif moves[i]['castleLeft'] then
             -- check if any of the two squares to the left are being attacked
             -- change turn to get opponents moves
-            opponentsMoves = self.board:getAllMoves(opponentsColor)
+            opponentsMoves = board:getAllMoves(opponentsColor)
 
             for j = 1, #opponentsMoves do
                 if opponentsMoves[j]['gridX'] == piece.gridX - 1 and opponentsMoves[j]['gridY'] == piece.gridY then
@@ -283,16 +302,16 @@ function PlayState:getLegalMoves(piece)
         end
 
         -- check if there is an enemy piece where we are about to fake-move to
-        if self.board:oppColor(moves[i]['gridX'], moves[i]['gridY'], piece) then
-            for j = 1, #self.board.pieces do
+        if board:oppColor(moves[i]['gridX'], moves[i]['gridY'], piece) then
+            for j = 1, #board.pieces do
                 -- found the piece
-                if self.board.pieces[j].gridX == moves[i]['gridX'] and self.board.pieces[j].gridY == moves[i]['gridY'] then
-                    tempPiece = self.board.pieces[j]
+                if board.pieces[j].gridX == moves[i]['gridX'] and board.pieces[j].gridY == moves[i]['gridY'] then
+                    tempPiece = board.pieces[j]
                     tempPieceIndex = j
                     break
                 end
             end
-            table.remove(self.board.pieces, tempPieceIndex)
+            table.remove(board.pieces, tempPieceIndex)
             pieceRemoved = true
         end
 
@@ -301,11 +320,11 @@ function PlayState:getLegalMoves(piece)
         piece.gridY = moves[i]['gridY']
 
         -- get opponents moves
-        opponentsMoves = self.board:getAllMoves(opponentsColor)
+        opponentsMoves = board:getAllMoves(opponentsColor)
 
         -- look for check on current turn using all of the opponents moves
         -- if this is false, then this move is legal, add it to the table
-        if self.board:getCheck(piece.color, opponentsMoves) == false then
+        if board:getCheck(piece.color, opponentsMoves) == false then
             table.insert(legalMoves, moves[i])
         end
 
@@ -319,7 +338,7 @@ function PlayState:getLegalMoves(piece)
 
         -- reinsert piece back into table if removed
         if pieceRemoved then
-            table.insert(self.board.pieces, tempPieceIndex, tempPiece)
+            table.insert(board.pieces, tempPieceIndex, tempPiece)
             pieceRemoved = false
         end
     end
@@ -331,28 +350,53 @@ end
     get all legal moves for a color
     returns a table of all legal moves
 ]]
-function PlayState:getAllLegalMoves(color)
+function PlayState:getAllLegalMoves(board, color)
     local allLegalMoves = {}
-    for i = 1, #self.board.pieces do
-        if self.board.pieces[i].color == color then
-            TableConcat(allLegalMoves, self:getLegalMoves(self.board.pieces[i]))
+    for i = 1, #board.pieces do
+        if board.pieces[i].color == color then
+            TableConcat(allLegalMoves, self:getLegalMoves(board, board.pieces[i]))
         end
     end
     return allLegalMoves
 end
 
 --[[
-    looks for checkmate on the current color
+    return true and a string for game over type
+    'checkmate'
+    'stalemate'
+    other conditions to add later
+]]
+function PlayState:gameOver(board, color)
+    if self:checkMate(board, color) then
+        return 'checkmate'
+    elseif self:staleMate(board, color) then
+        return 'stalemate'
+    end
+    return ''
+end
+
+--[[
+    looks for checkmate on the color
     returns true for checkmate, false otherwise
 ]]
-function PlayState:checkMate(color)
-    local allLegalMoves = self:getAllLegalMoves(color)
-    if #allLegalMoves == 0 then
-        self.checkmate = true
-        self.winner = self:getOppColor(color)
-        print('checkmate - ' .. self.winner .. ' wins')
+function PlayState:checkMate(board, color)
+    local allLegalMoves = self:getAllLegalMoves(board, color)
+    if #allLegalMoves == 0 and board:inCheck(color) then
+        return true
     else
-        print(color .. ' has ' .. #allLegalMoves .. ' legal moves')
+        return false
+    end
+end
+
+--[[
+    if the color has no legal moves, but is not in check, stalemate
+]]
+function PlayState:staleMate(board, color)
+    local allLegalMoves = self:getAllLegalMoves(board, color)
+    if #allLegalMoves == 0 and board:inCheck(color) == false then
+        return true
+    else
+        return false
     end
 end
 
@@ -362,12 +406,12 @@ end
 function PlayState:renderUI()
         -- buttons
     for i, button in ipairs(self.buttons) do 
-        button:render( ( i - 1) * (PLAY_BUTTON_WIDTH + self.button_margin) + 5, 5)
+        button:render(( i - 1) * (PLAY_BUTTON_WIDTH + self.button_margin) + 5, 5)
     end
 
     -- writes who is in check at the top of the screen
     love.graphics.setFont(gFonts['small'])
-    if self.board:hasCheck() and self.checkmate == false then
+    if self.board:inCheck(self.turn) and self.checkmate == false then
         if self.turn == 'white' then
             love.graphics.setColor(1, 1, 1, 1)
             love.graphics.printf('White is in check', 0, 13, VIRTUAL_WIDTH, 'center')
@@ -382,24 +426,6 @@ function PlayState:renderUI()
             -- text
             love.graphics.setColor(0, 0, 0, 1)
             love.graphics.printf('Black is in check', 0, 13, VIRTUAL_WIDTH, 'center')
-        end
-
-    -- writes checkmate and player who won at the top of the screen
-    elseif self.checkmate then
-        if self.winner == 'white' then
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.printf('Checkmate - White wins', 0, 13, VIRTUAL_WIDTH, 'center')
-        elseif self.winner == 'black' then
-            -- text border
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.printf('Checkmate - Black wins', 1, 13, VIRTUAL_WIDTH, 'center')
-            love.graphics.printf('Checkmate - Black wins', -1, 13, VIRTUAL_WIDTH, 'center')
-            love.graphics.printf('Checkmate - Black wins', 0, 14, VIRTUAL_WIDTH, 'center')
-            love.graphics.printf('Checkmate - Black wins', 0, 12, VIRTUAL_WIDTH, 'center')
-
-            -- text
-            love.graphics.setColor(0, 0, 0, 1)
-            love.graphics.printf('Checkmate - Black wins', 0, 13, VIRTUAL_WIDTH, 'center')
         end
 
     -- writes who's turn it is

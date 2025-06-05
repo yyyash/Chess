@@ -31,7 +31,7 @@ function love.load()
     ['color_select'] = function() return ColorSelectState() end,
     ['one_player'] = function() return OnePlayerState() end,
     ['two_player'] = function() return TwoPlayerState() end,
-    ['game-over'] = function() return GameOverState() end
+    ['game_over'] = function() return GameOverState() end
     }
     gStateMachine:change('menu')
 
