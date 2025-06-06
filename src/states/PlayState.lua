@@ -6,6 +6,7 @@ PlayState = Class{__includes = BaseState}
 function PlayState:enter(params)
     self.board = Board(params.p1_color)
     self.p1_color = params.p1_color
+    self.p2_color = self:getOppColor(self.p1_color)
     self.turn = 'white'
     self.selectedGridX = 0
     self.selectedGridY = 0
@@ -368,8 +369,10 @@ end
 ]]
 function PlayState:gameOver(board, color)
     if self:checkMate(board, color) then
+        board.checkmate = self:getOppColor(color)
         return 'checkmate'
     elseif self:staleMate(board, color) then
+        board.stalemate = true
         return 'stalemate'
     end
     return ''

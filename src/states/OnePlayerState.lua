@@ -12,20 +12,13 @@ function OnePlayerState:update(dt)
 
     -- AI turn
     if self.turn ~= self.p1_color then
-        print('ai turn')
-        local ai_legal_moves = self:getAllLegalMoves(self.board, self.turn)
-        if #ai_legal_moves ~= 0 then
 
-            -- get a random move
-            local move_index = math.random(#ai_legal_moves)
-            self.selectedPiece = ai_legal_moves[move_index]['piece']
-            self.board:selectPiece(self.selectedPiece.gridX, self.selectedPiece.gridY)
-            self.selectedGridX = ai_legal_moves[move_index]['gridX']
-            self.selectedGridY = ai_legal_moves[move_index]['gridY']
+        local bestScore, bestMove = self:minimax(self.board, 1, true)
 
-            -- move the selected piece to the selected square
-            -- add any taken pieces to the graveyard
-            TableConcat(self.takenPieces, self:makeMove(self.board, ai_legal_moves[move_index]))
+        -- move the selected piece to the selected square
+        -- add any taken pieces to the graveyard
+        if bestMove then
+            TableConcat(self.takenPieces, self:makeMove(self.board, bestMove))
 
             -- check game over conditions
             self.gameOverType = self:gameOver(self.board, self:getOppTurn())
@@ -38,10 +31,14 @@ function OnePlayerState:update(dt)
                 self:changeTurns()
             end
 
-            -- reset selected piece and legal moves
-            self.board:deselectPiece()
-            self.selectedPiece = nil
+        else
+            --print('ai found no legal moves, we shouldnt get here')
         end
+
+        -- reset selected piece and legal moves
+        self.board:deselectPiece()
+        self.selectedPiece = nil
+        
 
     -- player 1 turn
     else
@@ -106,57 +103,83 @@ end
     minimax algorithm
 ]]
 function OnePlayerState:minimax(board, depth, isMaximizingPlayer)
-    -- 1. base Cases (Terminal Nodes):
-    -- if depth is 0, or if the game is over (checkmate, stalemate), evaluate the board and return the score
-    if depth == 0 or isGameOver(board) then
-        return evaluateBoard(board)
+    -- 1. if depth is 0, or if the game is over (checkmate, stalemate), evaluate the board and return the score
+    if depth == 0 or board.checkmate ~= '' or board.stalemate then
+        --print(board:eval())
+        return board:eval()
     end
 
-    -- 2. Maximizing Player's Turn (AI):
+    -- 2. maximizing ai turn
     if isMaximizingPlayer then
-        local bestValue = -math.huge -- Initialize with negative infinity
+        local bestValue = -math.huge
         local bestMove = nil
 
-        -- Generate all possible moves for the current player
-        local possibleMoves = generateAllLegalMoves(board, "AI_Color")
+        -- generate all possible moves for the ai
+        local possibleMoves = self:getAllLegalMoves(board, self.p2_color)
+        --print(#possibleMoves)
 
         for i, move in ipairs(possibleMoves) do
-            -- Create a new board state by applying the move
-            local newBoard = cloneBoard(board)
-            applyMove(newBoard, move) -- This function modifies newBoard
-            -- check end game conditions, set gameOver on the board if we have a draw or checkmate
+            -- create a new board state and apply the move
+            local newBoard = board:clone()
+            print(board)
+            print(newBoard)
 
-            -- Recursively call minimax for the opponent (minimizing player)
-            local value = minimax(newBoard, depth - 1, false)
+            -- make the move
+            --[[ self.selectedPiece = move['piece']
+            newBoard:selectPiece(move['piece'].gridX, move['piece'].gridY)
+            self.selectedGridX = move['gridX']
+            self.selectedGridY = move['gridY'] ]]
+            self:makeMove(newBoard, move)
 
-            -- Update best value if current move is better
+            -- check end game conditions, sets checkmate or stalemate on the board (for eval function)
+            self:gameOver(board, self.p1_color)
+
+            -- recursively call minimax for player 1 (minimizing player)
+            local value = self:minimax(newBoard, depth - 1, false)
+
+            -- update best value if current move is better
             if value > bestValue then
                 bestValue = value
                 bestMove = move
             end
         end
-        return bestValue, bestMove -- Return the best value and the move that leads to it
-    -- 3. Minimizing Player's Turn (Opponent):
+
+        return bestValue, bestMove -- return the best value and the move that leads to it
+
+    -- 3. minimizing player 1 turn (human)
     else -- isMinimizingPlayer
-        local bestValue = math.huge -- Initialize with positive infinity
+        local bestValue = math.huge
         local bestMove = nil
 
-        -- Generate all possible moves for the opponent
-        local possibleMoves = generateAllLegalMoves(board, "Opponent_Color")
+        -- generate all possible moves for the opponent
+        local possibleMoves = self:getAllLegalMoves(board, self.p1_color)
 
         for i, move in ipairs(possibleMoves) do
-            local newBoard = cloneBoard(board)
-            applyMove(newBoard, move)
+            -- create a new board state and apply the move
+            local newBoard = board:clone()
 
-            -- Recursively call minimax for the AI (maximizing player)
-            local value = minimax(newBoard, depth - 1, true)
+            -- make the move
+            --[[ self.selectedPiece = move['piece']
+            newBoard:selectPiece(move['piece'].gridX, move['piece'].gridY)
+            self.selectedGridX = move['gridX']
+            self.selectedGridY = move['gridY'] ]]
+            self:makeMove(newBoard, move)
 
-            -- Update best value if current move is worse for AI (better for opponent)
+            -- check end game conditions, sets checkmate or stalemate on the board (for eval function)
+            if self:gameOver(board, self.p2_color) then
+                isGameOver = true
+            end
+
+            -- recursively call minimax for the ai (maximizing player)
+            local value = self:minimax(newBoard, depth - 1, true)
+
+            -- update best value if current move is worse for AI (better for opponent)
             if value < bestValue then
                 bestValue = value
                 bestMove = move
             end
         end
+
         return bestValue, bestMove
     end
 end

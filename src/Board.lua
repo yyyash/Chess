@@ -8,6 +8,8 @@ function Board:init(p1_color)
     -- table of all pieces on the board
     self.pieces = {}
     self.p1_color = p1_color
+    self.checkmate = ''
+    self.stalemate = false
 
     -- generate pieces for new game
     -- player 1 is white
@@ -851,8 +853,12 @@ end
     returns whites piece values - blacks piece values
 ]]
 function Board:materialDifference()
+
     local total_value = 0
+
     for i = 1, #self.pieces do
+
+        -- piece value counts
         if self.pieces[i].color == 'white' then
             if self.pieces[i].pieceType == 'pawn' then
                 total_value = total_value + 1
@@ -863,6 +869,7 @@ function Board:materialDifference()
             elseif self.pieces[i].pieceType == 'queen' then
                 total_value = total_value + 9
             end
+
         else
             if self.pieces[i].pieceType == 'pawn' then
                 total_value = total_value - 1
@@ -874,6 +881,55 @@ function Board:materialDifference()
                 total_value = total_value - 9
             end
         end
+
     end
+
     return total_value
+end
+
+--[[
+    tallys up board material difference
+    returns whites piece values - blacks piece values
+]]
+function Board:eval()
+
+    local eval = 0
+
+    for i = 1, #self.pieces do
+
+        -- piece value counts
+        if self.pieces[i].color == 'white' then
+            if self.pieces[i].pieceType == 'pawn' then
+                eval = eval + 1
+            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
+                eval = eval + 3
+            elseif self.pieces[i].pieceType == 'rook' then
+                eval = eval + 5
+            elseif self.pieces[i].pieceType == 'queen' then
+                eval = eval + 9
+            end
+
+        else
+            if self.pieces[i].pieceType == 'pawn' then
+                eval = eval - 1
+            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
+                eval = eval - 3
+            elseif self.pieces[i].pieceType == 'rook' then
+                eval = eval - 5
+            elseif self.pieces[i].pieceType == 'queen' then
+                eval = eval - 9
+            end
+        end
+
+    end
+
+    if self.checkmate == 'white' then
+        eval = math.huge
+    elseif self.checkmate == 'black' then
+        eval = -math.huge
+    elseif self.stalemate then
+        eval = 0
+    end
+
+    return eval
 end
