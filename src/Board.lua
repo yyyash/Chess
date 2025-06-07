@@ -8,6 +8,13 @@ function Board:init(p1_color)
     -- table of all pieces on the board
     self.pieces = {}
     self.p1_color = p1_color
+
+    if self.p1_color == 'white' then
+        self.p2_color = 'black'
+    else
+        self.p2_color = 'white'
+    end
+
     self.checkmate = ''
     self.stalemate = false
 
@@ -62,7 +69,7 @@ function Board:init(p1_color)
         table.insert(self.pieces, Piece(5, 1, 'black', 'king', BLACK_KING, 2))
 
     -- player 1 is black
-    else
+    elseif p1_color == 'black' then
 
         -- black pawns
         for i = 1, 8 do
@@ -111,6 +118,23 @@ function Board:init(p1_color)
         table.insert(self.pieces, Piece(4, 1, 'white', 'king', WHITE_KING, 2))
     end
     
+end
+
+function Board:clone()
+    -- create new board using boards constructor
+    local clonedBoard = Board(self.p1_color)
+
+    -- copy attributes
+    clonedBoard.checkmate = self.checkmate
+    clonedBoard.stalemate = self.stalemate
+
+    -- copy table of pieces
+    clonedBoard.pieces = {}
+    for i, piece in ipairs(self.pieces) do
+        table.insert(clonedBoard.pieces, piece:clone())
+    end
+
+    return clonedBoard
 end
 
 function Board:render()
@@ -266,14 +290,14 @@ function Board:knightMoves(piece)
     local possibleMoves = {}
     possibleMoves = { 
         -- 8 possible moves for knight
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 2, ['piece'] = piece},
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 2, ['piece'] = piece},
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 2, ['piece'] = piece},
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 2, ['piece'] = piece},
-        { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY + 1, ['piece'] = piece},
-        { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY + 1, ['piece'] = piece},
-        { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY - 1, ['piece'] = piece},
-        { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY - 1, ['piece'] = piece}
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 2, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 2, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 2, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 2, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+        { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY + 1, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+        { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY + 1, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+        { ['gridX'] = piece.gridX + 2, ['gridY'] = piece.gridY - 1, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+        { ['gridX'] = piece.gridX - 2, ['gridY'] = piece.gridY - 1, ['startX'] = piece.gridX, ['startY'] = piece.gridY}
     }
     -- only include moves that are inbounds and land on an opposite color piece or an empty square
     for i = 1, #possibleMoves do
@@ -295,19 +319,19 @@ function Board:pawnMoves(piece)
     if piece.player == 1 then
         -- 4 possible moves for bottom pawns
         possibleMoves = {
-            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
-            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
-            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
-            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece}
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY}
         }
     -- player 2 can only move +y
     else
         -- 4 possible moves for top pawns
         possibleMoves = {
-            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
-            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
-            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece},
-            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['piece'] = piece}
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+            { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 2, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+            { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY},
+            { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['triggersEnPassant'] = false, ['enPassantTake'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY}
         }
     end
     -- check if first forward move has an empty space and it is in bounds
@@ -373,11 +397,11 @@ function Board:bishopMoves(piece)
     while checkX <= 8 and checkY <= 8 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -393,11 +417,11 @@ function Board:bishopMoves(piece)
     while checkX <= 8 and checkY >= 1 do
     -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -413,11 +437,11 @@ function Board:bishopMoves(piece)
     while checkX >= 1 and checkY <= 8 do
     -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -433,11 +457,11 @@ function Board:bishopMoves(piece)
     while checkX >= 1 and checkY >= 1 do
     -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -461,11 +485,11 @@ function Board:rookMoves(piece)
     while checkX <= 8 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -480,11 +504,11 @@ function Board:rookMoves(piece)
     while checkX >= 1 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -500,11 +524,11 @@ function Board:rookMoves(piece)
     while checkY >= 1 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -519,11 +543,11 @@ function Board:rookMoves(piece)
     while checkY <= 8 do
         -- check if there are pieces on this square
         if self:emptySquare(checkX, checkY) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
         -- check if its an opposite color piece
         -- we are done looking, add this piece to the legal moves and breakout of the loop
         elseif self:oppColor(checkX, checkY, piece) then
-            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['piece'] = piece })
+            table.insert(legalMoves, { ['gridX'] = checkX, ['gridY'] = checkY, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
             break
         -- same color piece is here, don't add to legal moves table, just breakout
         else
@@ -541,17 +565,17 @@ function Board:kingMoves(piece)
     local legalMoves = {}
     local possibleMoves = {
         -- 8 possible moves for king
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
-        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY },
+        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY },
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY - 1, ['castleLeft'] = false, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY },
 
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
-        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY },
+        { ['gridX'] = piece.gridX + 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY },
 
-        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece },
+        { ['gridX'] = piece.gridX, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY },
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY + 1, ['castleLeft'] = false, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY },
 
-        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false, ['piece'] = piece }
+        { ['gridX'] = piece.gridX - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY }
     }
 
     -- only include moves that are inbounds and land on an opposite color piece or an empty square
@@ -585,7 +609,7 @@ function Board:kingMoves(piece)
                     -- and that rook hasn't moved
                     self:pieceFirstMove(piece.gridX + i, piece.gridY) then
                         -- king can castle, add right side castle to the legalmoves table
-                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true, ['piece'] = piece })
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 1, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
                 end
             end
 
@@ -605,7 +629,7 @@ function Board:kingMoves(piece)
                     -- and that rook hasn't moved
                     self:pieceFirstMove(piece.gridX - i, piece.gridY) then
                         -- king can castle, add left side castle to the legalmoves table
-                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 2, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false, ['piece'] = piece })
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 2, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
                 end
             end
 
@@ -626,7 +650,7 @@ function Board:kingMoves(piece)
                     -- and that rook hasn't moved
                     self:pieceFirstMove(piece.gridX + i, piece.gridY) then
                         -- king can castle, add right side castle to the legalmoves table
-                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 2, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true, ['piece'] = piece })
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX + i - 2, ['gridY'] = piece.gridY, ['castleLeft'] = false, ['castleRight'] = true, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
                 end
             end
 
@@ -646,13 +670,172 @@ function Board:kingMoves(piece)
                     -- and that rook hasn't moved
                     self:pieceFirstMove(piece.gridX - i, piece.gridY) then
                         -- king can castle, add left side castle to the legalmoves table
-                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 1, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false, ['piece'] = piece })
+                        table.insert(legalMoves, { ['gridX'] = piece.gridX - i + 1, ['gridY'] = piece.gridY, ['castleLeft'] = true, ['castleRight'] = false, ['startX'] = piece.gridX, ['startY'] = piece.gridY })
                 end
             end
         end
     end
 
     return legalMoves 
+end
+
+--[[
+    moves a piece on a board
+    returns table of pieces that were taken
+]]
+function Board:makeMove(move)
+    local taken_pieces = {}
+    local piece_to_move = self:getPieceAt(move['startX'], move['startY'])
+
+    -- if there is a piece on this square and its a different color, take it
+    if self:emptySquare(move['gridX'], move['gridY']) == false and self:pieceColor(move['gridX'], move['gridY']) ~= piece_to_move.color then
+        table.insert(taken_pieces, { 
+            ['piece_color'] = self:pieceColor(move['gridX'], move['gridY']), 
+            ['piece_type'] = self:pieceType(move['gridX'], move['gridY'])
+        })
+        self:takePiece(move['gridX'], move['gridY'])
+    end
+    -- set piece values for the special cases of moves: en passant, castling, pawn promotion
+    -- uses flags set in the moves table during move generation
+
+    -- set the enPassantFlag if pawn first moved to an adjecent enemy pawn
+    if move['triggersEnPassant'] then
+        self:setEnPassant(piece_to_move)
+
+    -- take the pawn by en passant
+    elseif move['enPassantTake'] then
+        -- check if en passant piece is above
+        if self:checkEnPassant(move['gridX'], move['gridY'] + 1) then
+            table.insert(taken_pieces, { 
+                ['piece_color'] = self:pieceColor(move['gridX'], move['gridY'] + 1), 
+                ['piece_type'] = self:pieceType(move['gridX'], move['gridY'] + 1)
+            })
+            self:takePiece(move['gridX'], move['gridY'] + 1)
+        -- check if en passant piece is below
+        elseif self:checkEnPassant(move['gridX'], move['gridY'] - 1) then
+            table.insert(taken_pieces, { 
+                ['piece_color'] = self:pieceColor(move['gridX'], move['gridY'] - 1), 
+                ['piece_type'] = self:pieceType(move['gridX'], move['gridY'] - 1)
+            })
+            self:takePiece(move['gridX'], move['gridY'] - 1)
+        end
+    end
+    
+    -- white on bottom
+    if self.p1_color == 'white' then
+        -- castle short
+        if move['castleRight'] then
+            for i = 1, #self.pieces do
+                -- find the rook to the right of the selected king
+                if self.pieces[i].gridX == piece_to_move.gridX + 3 and self.pieces[i].gridY == piece_to_move.gridY and self.pieces[i].pieceType == 'rook' then
+                    -- move the rook 1 square to the right of the selected king
+                    self.pieces[i]:moveTo(piece_to_move.gridX + 1, piece_to_move.gridY)
+                end
+            end
+
+        -- castle long
+        elseif move['castleLeft'] then
+            for i = 1, #self.pieces do
+                -- find the rook to the left of the selected king
+                if self.pieces[i].gridX == piece_to_move.gridX - 4 and self.pieces[i].gridY == piece_to_move.gridY and self.pieces[i].pieceType == 'rook' then
+                    -- move the rook 2 squares to the left of the selected king
+                    self.pieces[i]:moveTo(piece_to_move.gridX - 1, piece_to_move.gridY)
+                end
+            end
+        end
+
+    -- black on bottom
+    else
+        -- castle long
+        if move['castleRight'] then
+            for i = 1, #self.pieces do
+                -- find the rook to the right of the selected king
+                if self.pieces[i].gridX == piece_to_move.gridX + 4 and self.pieces[i].gridY == piece_to_move.gridY and self.pieces[i].pieceType == 'rook' then
+                    -- move the rook 1 square to the right of the selected king
+                    self.pieces[i]:moveTo(piece_to_move.gridX + 1, piece_to_move.gridY)
+                end
+            end
+
+        -- castle short
+        elseif move['castleLeft'] then
+            for i = 1, #self.pieces do
+                -- find the rook to the left of the selected king
+                if self.pieces[i].gridX == piece_to_move.gridX - 3 and self.pieces[i].gridY == piece_to_move.gridY and self.pieces[i].pieceType == 'rook' then
+                    -- move the rook 2 squares to the left of the selected king
+                    self.pieces[i]:moveTo(piece_to_move.gridX - 1, piece_to_move.gridY)
+                end
+            end
+        end
+    end
+
+    -- move the piece to the selected square
+    piece_to_move:moveTo(move['gridX'], move['gridY'])
+
+    -- if player 1 just moved and player 2 had an enPassant pawn, reset the enPassant flag
+    if self:enPassantColor() ~= nil and self:enPassantColor() ~= piece_to_move.color then
+        self:resetEnPassant()
+    end
+
+    -- pawn promotion
+
+    -- white on bottom
+    if self.p1_color == 'white' then
+
+        if piece_to_move.pieceType == 'pawn' and piece_to_move.gridY == 1 and piece_to_move.color == 'white' then
+            piece_to_move.pieceType = 'queen'
+            piece_to_move.tileID = WHITE_QUEEN
+
+        elseif piece_to_move.pieceType == 'pawn' and piece_to_move.gridY == 8 and piece_to_move.color == 'black' then
+            piece_to_move.pieceType = 'queen'
+            piece_to_move.tileID = BLACK_QUEEN
+        end
+
+    -- black on bottom
+    else
+
+        if piece_to_move.pieceType == 'pawn' and piece_to_move.gridY == 8 and piece_to_move.color == 'white' then
+            piece_to_move.pieceType = 'queen'
+            piece_to_move.tileID = WHITE_QUEEN
+
+        elseif piece_to_move.pieceType == 'pawn' and piece_to_move.gridY == 1 and piece_to_move.color == 'black' then
+            piece_to_move.pieceType = 'queen'
+            piece_to_move.tileID = BLACK_QUEEN
+        end
+    end
+
+    -- sets check if move put opponent in check
+    -- resets check if move protected the king
+    local all_moves = self:getAllMoves(piece_to_move.color)
+    -- look for check on the opposing player and set check on the opposing king
+    if self:getCheck(self:getOppColor(piece_to_move), all_moves) then
+        self:setCheck(self:getOppColor(piece_to_move))
+    end
+
+    -- reset check if we just moved to protect the king
+    all_moves = {}
+    all_moves = self:getAllMoves(self:getOppColor(piece_to_move))
+
+    if self:getCheck(piece_to_move.color, all_moves) == false then
+        self:resetCheck(piece_to_move.color)
+    else
+        -- we just moved ourself into check, not legal, we should never get here
+        self:setCheck(piece_to_move.color)
+        -- debug
+        print('shit is fucked up yo')
+    end
+
+    return taken_pieces
+end
+
+--[[
+    returns the piece at the grid x, y
+]]
+function Board:getPieceAt(x, y)
+    for i = 1, #self.pieces do
+        if self.pieces[i].gridX == x and self.pieces[i].gridY == y then
+            return self.pieces[i]
+        end
+    end
 end
 
 --[[
@@ -898,18 +1081,7 @@ function Board:eval()
     for i = 1, #self.pieces do
 
         -- piece value counts
-        if self.pieces[i].color == 'white' then
-            if self.pieces[i].pieceType == 'pawn' then
-                eval = eval + 1
-            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
-                eval = eval + 3
-            elseif self.pieces[i].pieceType == 'rook' then
-                eval = eval + 5
-            elseif self.pieces[i].pieceType == 'queen' then
-                eval = eval + 9
-            end
-
-        else
+        if self.pieces[i].color == self.p1_color then
             if self.pieces[i].pieceType == 'pawn' then
                 eval = eval - 1
             elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
@@ -919,14 +1091,28 @@ function Board:eval()
             elseif self.pieces[i].pieceType == 'queen' then
                 eval = eval - 9
             end
+
+        else
+            if self.pieces[i].pieceType == 'pawn' then
+                eval = eval + 1
+            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
+                eval = eval + 3
+            elseif self.pieces[i].pieceType == 'rook' then
+                eval = eval + 5
+            elseif self.pieces[i].pieceType == 'queen' then
+                eval = eval + 9
+            end
         end
 
     end
 
-    if self.checkmate == 'white' then
-        eval = math.huge
-    elseif self.checkmate == 'black' then
+    -- checkmate 
+    if self.checkmate == self.p1_color then
         eval = -math.huge
+    elseif self.checkmate == self.p2_color then
+        eval = math.huge
+
+    -- stalemate
     elseif self.stalemate then
         eval = 0
     end

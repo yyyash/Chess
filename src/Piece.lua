@@ -28,6 +28,19 @@ function Piece:init(x, y, color, pieceType, tileID, player)
     self.y = (self.gridY - 1) * TILE_SIZE + BOARD_OFFSET_Y
 end
 
+function Piece:clone()
+    -- create a new piece using the constructor of piece
+    local clonedPiece = Piece(self.gridX, self.gridY, self.color, self.pieceType, self.tileID, self.player)
+
+    -- copy attributes not in the constructor
+    clonedPiece.isSelected = self.isSelected
+    clonedPiece.firstMove = self.firstMove
+    clonedPiece.enPassant = self.enPassant
+    clonedPiece.inCheck = self.inCheck
+
+    return clonedPiece
+end
+
 function Piece:render()
 
     -- highlight square red if the king is in check
