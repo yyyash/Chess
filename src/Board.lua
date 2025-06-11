@@ -15,6 +15,8 @@ function Board:init(p1_color)
         self.p2_color = 'white'
     end
 
+    self.turn = 'white'
+
     self.checkmate = ''
     self.stalemate = false
 
@@ -116,8 +118,7 @@ function Board:init(p1_color)
 
         -- white king
         table.insert(self.pieces, Piece(4, 1, 'white', 'king', WHITE_KING, 2))
-    end
-    
+    end 
 end
 
 function Board:clone()
@@ -125,6 +126,7 @@ function Board:clone()
     local clonedBoard = Board(self.p1_color)
 
     -- copy attributes
+    clonedBoard.turn = self.turn
     clonedBoard.checkmate = self.checkmate
     clonedBoard.stalemate = self.stalemate
 
@@ -824,6 +826,9 @@ function Board:makeMove(move)
         print('shit is fucked up yo')
     end
 
+    -- change self.turn
+    self.turn = (self.turn == 'white' and 'black') or 'white'
+
     return taken_pieces
 end
 
@@ -920,6 +925,7 @@ function Board:takePiece(x, y)
     for i = 1, #self.pieces do
         if self.pieces[i].gridX == x and self.pieces[i].gridY == y then
             pieceIndex = i
+            break
         end
     end
     -- remove the piece at that index
@@ -1081,18 +1087,7 @@ function Board:eval()
     for i = 1, #self.pieces do
 
         -- piece value counts
-        if self.pieces[i].color == self.p1_color then
-            if self.pieces[i].pieceType == 'pawn' then
-                eval = eval - 1
-            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
-                eval = eval - 3
-            elseif self.pieces[i].pieceType == 'rook' then
-                eval = eval - 5
-            elseif self.pieces[i].pieceType == 'queen' then
-                eval = eval - 9
-            end
-
-        else
+        if self.pieces[i].color == self.p2_color then
             if self.pieces[i].pieceType == 'pawn' then
                 eval = eval + 1
             elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
@@ -1102,16 +1097,26 @@ function Board:eval()
             elseif self.pieces[i].pieceType == 'queen' then
                 eval = eval + 9
             end
+
+        else
+            if self.pieces[i].pieceType == 'pawn' then
+                eval = eval - 1
+            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
+                eval = eval - 3
+            elseif self.pieces[i].pieceType == 'rook' then
+                eval = eval - 5
+            elseif self.pieces[i].pieceType == 'queen' then
+                eval = eval - 9
+            end
         end
 
     end
 
     -- checkmate 
-    if self.checkmate == self.p1_color then
-        eval = -math.huge
-    elseif self.checkmate == self.p2_color then
+    if self.checkmate == self.p2_color then
         eval = math.huge
-
+    elseif self.checkmate == self.p1_color then
+        eval = -math.huge
     -- stalemate
     elseif self.stalemate then
         eval = 0

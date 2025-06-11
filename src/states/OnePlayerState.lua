@@ -13,7 +13,7 @@ function OnePlayerState:update(dt)
     -- AI turn
     if self.turn ~= self.p1_color then
 
-        local bestScore, bestMove = self:minimax(self.board, 1, true)
+        local bestScore, bestMove = self:minimax(self.board, 2, true)
         print('best eval was ' .. bestScore)
 
         -- move the selected piece to the selected square
@@ -119,7 +119,7 @@ function OnePlayerState:minimax(board, depth, isMaximizingPlayer)
         local bestMove = nil
 
         -- generate all possible moves for the ai
-        local possibleMoves = self:getAllLegalMoves(board, self.p2_color)
+        local possibleMoves = self:getAllLegalMoves(board, board.turn)
         --print(#possibleMoves)
 
         for i, move in ipairs(possibleMoves) do
@@ -130,13 +130,13 @@ function OnePlayerState:minimax(board, depth, isMaximizingPlayer)
             newBoard:makeMove(move)
 
             -- check end game conditions, sets checkmate or stalemate on the board (for eval function)
-            self:gameOver(newBoard, self.p1_color)
+            self:gameOver(newBoard, newBoard.turn)
 
             -- recursively call minimax for player 1 (minimizing player)
             local value = self:minimax(newBoard, depth - 1, false)
 
             -- update best value if current move is better
-            if value >= bestValue then
+            if value > bestValue then
                 bestValue = value
                 bestMove = move
                 print(bestValue)
@@ -153,7 +153,7 @@ function OnePlayerState:minimax(board, depth, isMaximizingPlayer)
         local bestMove = nil
 
         -- generate all possible moves for the opponent
-        local possibleMoves = self:getAllLegalMoves(board, self.p1_color)
+        local possibleMoves = self:getAllLegalMoves(board, board.turn)
 
         for i, move in ipairs(possibleMoves) do
             -- create a new board state and apply the move
@@ -163,17 +163,16 @@ function OnePlayerState:minimax(board, depth, isMaximizingPlayer)
             newBoard:makeMove(move)
 
             -- check end game conditions, sets checkmate or stalemate on the board (for eval function)
-            if self:gameOver(newBoard, self.p2_color) then
-                isGameOver = true
-            end
+            self:gameOver(newBoard, newBoard.turn)
 
             -- recursively call minimax for the ai (maximizing player)
             local value = self:minimax(newBoard, depth - 1, true)
 
             -- update best value if current move is worse for AI (better for opponent)
-            if value <= bestValue then
+            if value < bestValue then
                 bestValue = value
                 bestMove = move
+                print(bestValue)
             end
         end
 
