@@ -13,7 +13,11 @@ function OnePlayerState:update(dt)
     -- AI turn
     if self.turn ~= self.p1_color then
 
-        local bestScore, bestMove = self:minimax(self.board, 2, true)
+        local initialAlpha = -math.huge
+        local initialBeta = math.huge
+        local aiMaxDepth = 3
+
+        local bestScore, bestMove = self:minimax(self.board, aiMaxDepth, initialAlpha, initialBeta, true)
         print('best eval was ' .. bestScore)
 
         -- move the selected piece to the selected square
@@ -106,22 +110,39 @@ end
     chess ai function
     minimax algorithm
 ]]
-function OnePlayerState:minimax(board, depth, isMaximizingPlayer)
+function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
     -- 1. if depth is 0, or if the game is over (checkmate, stalemate), evaluate the board and return the score
     if depth == 0 or board.checkmate ~= '' or board.stalemate then
         --print(board:eval())
         return board:eval()
     end
 
+    local possibleMoves = self:getAllLegalMoves(board, board.turn)
+
+    if #possibleMoves == 0 then
+        -- You need a way to determine if the current 'board.turn' player is in check.
+        -- Assuming you have a board:isInCheck(color) function.
+        if board:inCheck(board.turn) then
+            -- If no legal moves AND in check, it's checkmate for the current player.
+            -- This means a win for the *other* player.
+            -- From AI's perspective (maximizing player):
+            -- If AI (maximizing) is checkmated, score is -math.huge.
+            -- If Human (minimizing) is checkmated, score is +math.huge.
+            -- The eval function already returns AI's perspective, so we need to be consistent.
+            -- If isMaximizingPlayer is true, and they are checkmated, return -math.huge.
+            -- If isMaximizingPlayer is false (opponent's turn), and they are checkmated, return math.huge.
+            return isMaximizingPlayer and -math.huge or math.huge
+        else
+            -- If no legal moves AND not in check, it's a stalemate (draw).
+            return 0
+        end
+    end
+
     -- 2. maximizing ai turn
     if isMaximizingPlayer then
         local bestValue = -math.huge
         local bestMove = nil
-
-        -- generate all possible moves for the ai
-        local possibleMoves = self:getAllLegalMoves(board, board.turn)
-        --print(#possibleMoves)
-
+        
         for i, move in ipairs(possibleMoves) do
             -- create a new board state and apply the move
             local newBoard = board:clone()
@@ -133,14 +154,19 @@ function OnePlayerState:minimax(board, depth, isMaximizingPlayer)
             self:gameOver(newBoard, newBoard.turn)
 
             -- recursively call minimax for player 1 (minimizing player)
-            local value = self:minimax(newBoard, depth - 1, false)
+            local value = self:minimax(newBoard, depth - 1, alpha, beta, false)
 
             -- update best value if current move is better
             if value > bestValue then
                 bestValue = value
                 bestMove = move
-                print(bestValue)
-                --print(bestMove['gridX'] .. ' , ' .. bestMove['gridY'])
+            end
+
+            -- Alpha-Beta Pruning: Update alpha and check for cutoff
+            alpha = math.max(alpha, bestValue) -- Alpha is the best score found so far for MAX player
+            if beta <= alpha then -- If beta (opponent's best guaranteed score) is less than or equal to alpha (our best score), prune
+                print("ALPHA CUTOFF (MAX): Depth", depth, "Move:", move.startX, move.startY, "->", move.gridX, move.gridY, "Eval:", value)
+                break -- Prune this branch
             end
         end
 
@@ -151,9 +177,6 @@ function OnePlayerState:minimax(board, depth, isMaximizingPlayer)
     else -- isMinimizingPlayer
         local bestValue = math.huge
         local bestMove = nil
-
-        -- generate all possible moves for the opponent
-        local possibleMoves = self:getAllLegalMoves(board, board.turn)
 
         for i, move in ipairs(possibleMoves) do
             -- create a new board state and apply the move
@@ -166,13 +189,19 @@ function OnePlayerState:minimax(board, depth, isMaximizingPlayer)
             self:gameOver(newBoard, newBoard.turn)
 
             -- recursively call minimax for the ai (maximizing player)
-            local value = self:minimax(newBoard, depth - 1, true)
+            local value = self:minimax(newBoard, depth - 1, alpha, beta, true)
 
             -- update best value if current move is worse for AI (better for opponent)
             if value < bestValue then
                 bestValue = value
                 bestMove = move
-                print(bestValue)
+            end
+
+            -- Alpha-Beta Pruning: Update beta and check for cutoff
+            beta = math.min(beta, bestValue) -- Beta is the best score found so far for MIN player
+            if beta <= alpha then -- If beta (our best score) is less than or equal to alpha (opponent's best guaranteed score), prune
+                print("BETA CUTOFF (MIN): Depth", depth, "Move:", move.startX, move.startY, "->", move.gridX, move.gridY, "Eval:", value)
+                break -- Prune this branch
             end
         end
 
