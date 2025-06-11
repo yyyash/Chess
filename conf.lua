@@ -5,6 +5,6 @@
 
 function love.conf(t)
     -- debugging
-    t.console = true
-    -- t.console = false
+    --t.console = true
+    t.console = false
 end

@@ -44,7 +44,7 @@ function TwoPlayerState:update(dt)
 
                 -- move the selected piece to the selected square
                 -- add any taken pieces to the graveyard
-                TableConcat(self.takenPieces, self:makeMove(self.board, self.legalMoves[self.moveIndex]))
+                TableConcat(self.takenPieces, self.board:makeMove(self.legalMoves[self.moveIndex]))
 
                 -- check game over conditions
                 self.gameOverType = self:gameOver(self.board, self:getOppTurn())
