@@ -1083,46 +1083,76 @@ end
     returns whites piece values - blacks piece values
 ]]
 function Board:eval()
-
     local eval = 0
+    local gamePhase = self:getGamePhase() -- Determine game phase once per eval call
 
     for i = 1, #self.pieces do
+        local piece = self.pieces[i]
+        local pieceValue = PIECE_VALUE[piece.pieceType]
+        local pstValue = self:getSquarePSTValue(piece.pieceType, piece.gridX, piece.gridY, piece.color, gamePhase)
 
-        -- piece value counts
-        if self.pieces[i].color == self.p2_color then
-            if self.pieces[i].pieceType == 'pawn' then
-                eval = eval + 1
-            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
-                eval = eval + 3
-            elseif self.pieces[i].pieceType == 'rook' then
-                eval = eval + 5
-            elseif self.pieces[i].pieceType == 'queen' then
-                eval = eval + 9
-            end
-
-        else
-            if self.pieces[i].pieceType == 'pawn' then
-                eval = eval - 1
-            elseif self.pieces[i].pieceType == 'knight' or self.pieces[i].pieceType == 'bishop' then
-                eval = eval - 3
-            elseif self.pieces[i].pieceType == 'rook' then
-                eval = eval - 5
-            elseif self.pieces[i].pieceType == 'queen' then
-                eval = eval - 9
-            end
+        -- Add material value + positional value for the AI's pieces
+        -- Subtract material value + positional value for the opponent's pieces
+        if piece.color == self.p2_color then -- Assuming p2_color is your AI's color (maximizing player)
+            eval = eval + pieceValue + pstValue
+        else -- Opponent's pieces (minimizing player)
+            eval = eval - (pieceValue + pstValue)
         end
-
     end
 
-    -- checkmate 
-    if self.checkmate == self.p2_color then
-        eval = math.huge
-    elseif self.checkmate == self.p1_color then
-        eval = -math.huge
-    -- stalemate
-    elseif self.stalemate then
+    -- --- Checkmate and Stalemate Handling ---
+    -- These should override all other evaluations if a terminal state is reached.
+    -- Assuming `self.checkmate` and `self.stalemate` are set correctly by your `gameOver` function.
+    if self.checkmate then
+        if self.checkmate == self.p2_color then -- If AI checkmates opponent
+            eval = math.huge
+        elseif self.checkmate == self.p1_color then -- If opponent checkmates AI
+            eval = -math.huge
+        end
+    elseif self.stalemate then -- If it's a stalemate
         eval = 0
     end
 
     return eval
+end
+
+--[[
+    returns middle game or endgame based on number of pieces left on the board
+]]
+function Board:getGamePhase()
+    local num_pieces = #self.pieces
+    if num_pieces > 10 then -- More than 10 pieces
+        return 'middlegame'
+    elseif num_pieces <= 6 then -- 6 pieces or less
+        return 'endgame'
+    else -- treat as middlegame by default
+        return 'middlegame'
+    end
+end
+
+--[[
+    helper function to get a value from the piece square table for a specific square
+]]
+function Board:getSquarePSTValue(pieceType, gridX, gridY, pieceColor, gamePhase)
+    local pst_table
+
+    if pieceType == 'king' then
+        pst_table = (gamePhase == 'endgame') and PST_KING_EG or PST_KING_MG
+    else
+        pst_table = PSTs[pieceType]
+    end
+
+    if not pst_table then return 0 end -- Fallback if PST is missing (shouldn't happen)
+
+    local effective_rank = gridY
+    -- If the piece is black, mirror the rank to use the white-oriented PSTs
+    if pieceColor == self.p2_color then
+        effective_rank = 9 - gridY -- Assuming ranks are 1-8
+    end
+
+    -- Ensure indices are within bounds before accessing
+    if effective_rank >=1 and effective_rank <= 8 and gridX >=1 and gridX <= 8 then
+        return pst_table[effective_rank][gridX]
+    end
+    return 0 -- Return 0 for invalid square lookups
 end

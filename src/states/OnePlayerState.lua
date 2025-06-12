@@ -15,7 +15,7 @@ function OnePlayerState:update(dt)
 
         local initialAlpha = -math.huge
         local initialBeta = math.huge
-        local aiMaxDepth = 3
+        local aiMaxDepth = 2
 
         local bestScore, bestMove = self:minimax(self.board, aiMaxDepth, initialAlpha, initialBeta, true)
         print('best eval was ' .. bestScore)
@@ -39,8 +39,13 @@ function OnePlayerState:update(dt)
                 print('turn changed, no game over detected')
             end
 
-        else
-            print('ai found no legal moves, we shouldnt get here')
+        elseif bestMove == nil and self.board:inCheck(self.turn) then
+            print('ai found no legal moves, game over')
+            gStateMachine:change('game_over', { board = self.board, gameOverType = self.gameOverType, winner = self.turn, buttons = self.buttons})
+
+        elseif #bestMove == 0 and self.board:inCheck(self.turn) == false then
+            print('ai found no legal moves, game over')
+            gStateMachine:change('game_over', { board = self.board, gameOverType = self.gameOverType, winner = '', buttons = self.buttons})
         end
 
         -- reset selected piece and legal moves
