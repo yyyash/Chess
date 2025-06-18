@@ -16,6 +16,8 @@ function Board:init(p1_color, is_cloning)
     end
 
     self.turn = 'white'
+    self.moveCount = 0
+    self.gamePhase = ''
 
     self.checkmate = ''
     self.stalemate = false
@@ -131,6 +133,8 @@ function Board:clone()
     clonedBoard.turn = self.turn
     clonedBoard.checkmate = self.checkmate
     clonedBoard.stalemate = self.stalemate
+    clonedBoard.moveCount = self.moveCount
+    clonedBoard.gamePhase = self.gamePhase
 
     -- copy table of pieces
     clonedBoard.pieces = {}
@@ -831,6 +835,10 @@ function Board:makeMove(move)
     -- change self.turn
     self.turn = (self.turn == 'white' and 'black') or 'white'
 
+    self.moveCount = self.moveCount + 1
+    print(self.moveCount .. ' moves have been made')
+
+
     return taken_pieces
 end
 
@@ -1120,13 +1128,19 @@ end
     returns middle game or endgame based on number of pieces left on the board
 ]]
 function Board:getGamePhase()
-    local num_pieces = #self.pieces
-    if num_pieces > 10 then -- More than 10 pieces
+    local p1_queens = self:getNumQueens(self.p1_color)
+    local p2_queens = self:getNumQueens(self.p2_color)
+
+    if self.moveCount <= 8 then
+        return 'opening'
+    end
+
+    if p1_queens == p2_queens then
         return 'middlegame'
-    elseif num_pieces <= 6 then -- 6 pieces or less
+    elseif p1_queens == 0 and p2_queens == 0 then
         return 'endgame'
-    else -- treat as middlegame by default
-        return 'middlegame'
+    elseif p1_queens ~= p2_queens then
+        return 'threshold'
     end
 end
 
@@ -1155,4 +1169,17 @@ function Board:getSquarePSTValue(pieceType, gridX, gridY, pieceColor, gamePhase)
         return pst_table[effective_rank][gridX]
     end
     return 0 -- Return 0 for invalid square lookups
+end
+
+--[[
+    returns the number of queens for a color
+]]
+function Board:getNumQueens(color)
+    local count = 0
+    for i = 1, #self.pieces do
+        if self.pieces[i].pieceType == 'queen' and self.pieces[i].pieceColor == color then
+            count = count + 1
+        end
+    end
+    return count
 end

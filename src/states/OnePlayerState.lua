@@ -15,7 +15,7 @@ function OnePlayerState:update(dt)
 
         local initialAlpha = -math.huge
         local initialBeta = math.huge
-        local aiMaxDepth = 2
+        local aiMaxDepth = 3
 
         local bestScore, bestMove = self:minimax(self.board, aiMaxDepth, initialAlpha, initialBeta, true)
         print('best eval was ' .. bestScore)
@@ -124,6 +124,20 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
 
     local possibleMoves = self:getAllLegalMoves(board, board.turn)
 
+    -- move ordering
+    local scoredMoves = {}
+    local gamePhase = board:getGamePhase() -- get game phase once per node
+
+    for i, move in ipairs(possibleMoves) do
+        local score = self:scoreMove(board, move, gamePhase)
+        table.insert(scoredMoves, {move = move, score = score})
+    end
+
+    -- sort moves in descending order of score (highest score first)
+    table.sort(scoredMoves, function(a, b) 
+        return a.score > b.score
+    end)
+
     if #possibleMoves == 0 then
         -- You need a way to determine if the current 'board.turn' player is in check.
         -- Assuming you have a board:isInCheck(color) function.
@@ -148,7 +162,10 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
         local bestValue = -math.huge
         local bestMove = nil
         
-        for i, move in ipairs(possibleMoves) do
+        for i, scoredMoveData in ipairs(scoredMoves) do
+            -- extract the move object from the scoredMoves table
+            local move = scoredMoveData.move
+
             -- create a new board state and apply the move
             local newBoard = board:clone()
 
@@ -183,7 +200,10 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
         local bestValue = math.huge
         local bestMove = nil
 
-        for i, move in ipairs(possibleMoves) do
+        for i, scoredMoveData in ipairs(scoredMoves) do
+            -- extract the move object from the scoredMoves table
+            local move = scoredMoveData.move
+
             -- create a new board state and apply the move
             local newBoard = board:clone()
 
@@ -212,4 +232,60 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
 
         return bestValue, bestMove
     end
+end
+
+function OnePlayerState:scoreMove(board, move, gamePhase)
+local score = 0
+    local movingPiece = board:getPieceAt(move.startX, move.startY)
+    if not movingPiece then return 0 end -- Should not happen for a legal move
+
+    local targetPiece = board:getPieceAt(move.gridX, move.gridY)
+
+    -- 1. Promotions: Highest priority for pawns reaching the last rank
+    if movingPiece.pieceType == 'pawn' then
+        -- Check if it's a promotion (assuming gridY=1 for White promo, gridY=8 for Black promo)
+        if (movingPiece.color == board.p1_color and move.gridY == 1) or
+           (movingPiece.color == board.p2_color and move.gridY == 8) then
+            -- Give a bonus based on the promoted piece's value (queen is usually implied if not specified)
+            score = score + PROMOTION_SCORE + PIECE_VALUE['queen']
+            -- Promotions are so strong, you could even 'return score' here to prioritize even over captures,
+            -- but leaving it to sum allows for more nuanced scoring later if needed.
+        end
+    end
+
+    -- 2. Captures: Prioritize capturing valuable pieces with less valuable pieces (MVV/LVA)
+    if targetPiece then
+        local victimValue = PIECE_VALUE[targetPiece.pieceType]
+        local attackerRank = PIECE_ATTACK_RANK[movingPiece.pieceType]
+        -- Score is higher if victim is more valuable and attacker is less valuable
+        score = score + CAPTURE_SCORE_BASE + (victimValue * 10) - attackerRank
+    end
+
+    -- 3. Opening Pawn Center Bonus: Encourage central pawn development in the opening
+    if gamePhase == 'opening' and movingPiece.pieceType == 'pawn' and not targetPiece then
+        local targetX = move.gridX
+        local targetY = move.gridY
+        -- Central squares based on your board's gridY (1=top, 8=bottom)
+        -- d4=(4,5), e4=(5,5) for White; d5=(4,4), e5=(5,4) for Black
+        local isCentralPawnSquare = false
+        if (targetX == 4 and targetY == 5) or (targetX == 5 and targetY == 5) or
+           (targetX == 4 and targetY == 4) or (targetX == 5 and targetY == 4) then
+            isCentralPawnSquare = true
+        end
+        if isCentralPawnSquare then
+            score = score + OPENING_PAWN_CENTER_BONUS
+        end
+    end
+
+    -- 4. Positional Gains (PSTs): Encourage moves to better squares
+    local current_pst_value = board:getSquarePSTValue(movingPiece.pieceType, move.startX, move.startY, movingPiece.color, gamePhase)
+    local target_pst_value = board:getSquarePSTValue(movingPiece.pieceType, move.gridX, move.gridY, movingPiece.color, gamePhase)
+    score = score + (target_pst_value - current_pst_value)
+
+    -- 5. Castling: Small bonus to encourage castling early
+    if move.castleRight or move.castleLeft then
+        score = score + 0.5
+    end
+
+    return score
 end

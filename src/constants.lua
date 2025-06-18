@@ -56,6 +56,16 @@ PIECE_VALUE = {
     pawn = 1, knight = 3, bishop = 3, rook = 5, queen = 9, king = 0
 }
 
+-- piece attack ranks
+PIECE_ATTACK_RANK = {
+    pawn = 1, knight = 2, bishop = 3, rook = 4, queen = 5, king = 6
+}
+
+-- move ordering score constants
+PROMOTION_SCORE = 100000
+CAPTURE_SCORE_BASE = 90000
+OPENING_PAWN_CENTER_BONUS = 0.75
+
 -- piece square tables
 PST_PAWN = {
     -- Rank 8 (Black's 1st rank - promoting here is ideal)
