@@ -1094,9 +1094,61 @@ function Board:eval()
     local eval = 0
     local gamePhase = self:getGamePhase() -- Determine game phase once per eval call
 
+    local currentPieceValues = {}
+    if gamePhase == 'opening' or gamePhase == 'middlegame' then
+        currentPieceValues = {
+            pawn = 0.8,
+            knight = 3.2,
+            bishop = 3.3,
+            rook = 4.7,
+            queen = 9,
+            king = 0
+        }
+    elseif gamePhase == 'threshold' then
+        currentPieceValues = {
+            pawn = 0.9,
+            knight = 3.2,
+            bishop = 3.3,
+            rook = 4.8,
+            queen = 9.4,
+            king = 0
+        }
+    elseif gamePhase == 'endgame' then
+        currentPieceValues = {
+            pawn = 1.0,
+            knight = 3.2,
+            bishop = 3.3,
+            rook = 5.3,
+            queen = 9,
+            king = 0
+        }
+    end
+
     for i = 1, #self.pieces do
         local piece = self.pieces[i]
-        local pieceValue = PIECE_VALUE[piece.pieceType]
+        -- change some piece values depending on game phase
+        if gamePhase == 'opening' or gamePhase == 'middlegame' then
+            if piece.pieceType == 'pawn' then
+
+                -- center pawns
+                if piece.gridX == 4 or piece.gridX == 5 then
+                    currentPieceValues.pawn = 1
+                
+                -- bishop pawns
+                elseif piece.gridX == 3 or piece.gridX == 6 then
+                    currentPieceValues.pawn = 0.95
+
+                -- knight pawns
+                elseif piece.gridX == 2 or piece.gridX == 7 then
+                    currentPieceValues.pawn = 0.85
+
+                elseif piece.gridX == 1 or piece.gridX == 8 then
+                    currentPieceValues.pawn = 0.75
+                end
+            end
+        end
+        
+        local pieceValue = currentPieceValues[piece.pieceType]
         local pstValue = self:getSquarePSTValue(piece.pieceType, piece.gridX, piece.gridY, piece.color, gamePhase)
 
         -- Add material value + positional value for the AI's pieces

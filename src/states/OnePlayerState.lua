@@ -116,31 +116,18 @@ end
     minimax algorithm
 ]]
 function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
-    -- 1. if depth is 0, or if the game is over (checkmate, stalemate), evaluate the board and return the score
-    if depth == 0 or board.checkmate ~= '' or board.stalemate then
+
+    local possibleMoves = self:getAllLegalMoves(board, board.turn)
+
+    -- 1. if depth is 0, evaluate the board and return the score
+    if depth == 0 then
         --print(board:eval())
         return board:eval()
     end
 
-    local possibleMoves = self:getAllLegalMoves(board, board.turn)
-
-    -- move ordering
-    local scoredMoves = {}
-    local gamePhase = board:getGamePhase() -- get game phase once per node
-
-    for i, move in ipairs(possibleMoves) do
-        local score = self:scoreMove(board, move, gamePhase)
-        table.insert(scoredMoves, {move = move, score = score})
-    end
-
-    -- sort moves in descending order of score (highest score first)
-    table.sort(scoredMoves, function(a, b) 
-        return a.score > b.score
-    end)
-
+    -- if the game is over (checkmate, stalemate)
     if #possibleMoves == 0 then
-        -- You need a way to determine if the current 'board.turn' player is in check.
-        -- Assuming you have a board:isInCheck(color) function.
+
         if board:inCheck(board.turn) then
             -- If no legal moves AND in check, it's checkmate for the current player.
             -- This means a win for the *other* player.
@@ -156,6 +143,20 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
             return 0
         end
     end
+
+    -- move ordering
+    local scoredMoves = {}
+    local gamePhase = board:getGamePhase() -- get game phase once per node
+
+    for i, move in ipairs(possibleMoves) do
+        local score = self:scoreMove(board, move, gamePhase)
+        table.insert(scoredMoves, {move = move, score = score})
+    end
+
+    -- sort moves in descending order of score (highest score first)
+    table.sort(scoredMoves, function(a, b) 
+        return a.score > b.score
+    end)
 
     -- 2. maximizing ai turn
     if isMaximizingPlayer then
@@ -173,7 +174,7 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
             newBoard:makeMove(move)
 
             -- check end game conditions, sets checkmate or stalemate on the board (for eval function)
-            self:gameOver(newBoard, newBoard.turn)
+            -- self:gameOver(newBoard, newBoard.turn)
 
             -- recursively call minimax for player 1 (minimizing player)
             local value = self:minimax(newBoard, depth - 1, alpha, beta, false)
@@ -211,7 +212,7 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
             newBoard:makeMove(move)
 
             -- check end game conditions, sets checkmate or stalemate on the board (for eval function)
-            self:gameOver(newBoard, newBoard.turn)
+            -- self:gameOver(newBoard, newBoard.turn)
 
             -- recursively call minimax for the ai (maximizing player)
             local value = self:minimax(newBoard, depth - 1, alpha, beta, true)
