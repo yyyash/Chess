@@ -19,12 +19,35 @@ function OnePlayerState:update(dt)
 
         local bestScore, bestMove = self:minimax(self.board, aiMaxDepth, initialAlpha, initialBeta, true)
         print('best eval was ' .. bestScore)
+        print(self.prunedBranches .. ' branches pruned')
 
         -- move the selected piece to the selected square
         -- add any taken pieces to the graveyard
         if bestMove then
             -- need to select the piece in order to move it
-            TableConcat(self.takenPieces, self.board:makeMove(bestMove))
+            TableConcat(self.takenPieces, self.board:makeMove(bestMove))   
+            -- sets check if move put opponent in check
+            local all_moves = self.board:getAllMoves(self.turn)
+            -- look for check on the opposing player and set check on the opposing king
+            if self.board:getCheck(self.board:getOppColor(self.turn), all_moves) then
+                self.board:setCheck(self.board:getOppColor(self.turn))
+            else
+                self.board:resetCheck(self.board:getOppColor(self.turn))
+            end
+
+            --[[ -- reset check if we just moved to protect the king
+            all_moves = {}
+            all_moves = self.board:getAllMoves(self.board:getOppColor(self.turn))
+
+            if self.board:getCheck(self.turn, all_moves) == false then
+                self.board:resetCheck(self.turn)
+            else
+                -- we just moved ourself into check, not legal, we should never get here
+                self:setCheck(self.turn)
+                -- debug
+                print('moved ourself into check - should not happen')
+            end ]]
+
             print('best move was ' .. bestMove['gridX'] .. ' , ' .. bestMove['gridY'])
 
             -- check game over conditions
@@ -90,6 +113,28 @@ function OnePlayerState:update(dt)
                     -- add any taken pieces to the graveyard
                     TableConcat(self.takenPieces, self.board:makeMove(self.legalMoves[self.moveIndex]))
 
+                    -- sets check if move put opponent in check
+                    local all_moves = self.board:getAllMoves(self.turn)
+                    -- look for check on the opposing player and set check on the opposing king
+                    if self.board:getCheck(self.board:getOppColor(self.turn), all_moves) then
+                        self.board:setCheck(self.board:getOppColor(self.turn))
+                    else
+                        self.board:resetCheck(self.board:getOppColor(self.turn))
+                    end
+
+                    --[[ -- reset check if we just moved to protect the king
+                    all_moves = {}
+                    all_moves = self.board:getAllMoves(self.board:getOppColor(self.turn))
+
+                    if self.board:getCheck(self.turn, all_moves) == false then
+                        self.board:resetCheck(self.turn)
+                    else
+                        -- we just moved ourself into check, not legal, we should never get here
+                        self:setCheck(self.turn)
+                        -- debug
+                        print('moved ourself into check - should not happen')
+                    end ]]
+
                     -- check game over conditions
                     self.gameOverType = self:gameOver(self.board, self.board.turn)
                     -- look for gameover
@@ -118,14 +163,15 @@ end
 function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
 
     local possibleMoves = self:getAllLegalMoves(board, board.turn)
+    -- print(#possibleMoves .. ' moves at depth ' .. depth)
 
     -- 1. if depth is 0, evaluate the board and return the score
-    if depth == 0 then
+    if depth == 0 or board.checkmate ~= '' or board.stalemate == true then
         --print(board:eval())
         return board:eval()
     end
 
-    -- if the game is over (checkmate, stalemate)
+    --[[ -- if the game is over (checkmate, stalemate)
     if #possibleMoves == 0 then
 
         if board:inCheck(board.turn) then
@@ -142,7 +188,7 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
             -- If no legal moves AND not in check, it's a stalemate (draw).
             return 0
         end
-    end
+    end ]]
 
     -- move ordering
     local scoredMoves = {}
@@ -173,8 +219,11 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
             -- make the move on the new board
             newBoard:makeMove(move)
 
+            newBoard.turn = (newBoard.turn == 'white' and 'black') or 'white'
+
             -- check end game conditions, sets checkmate or stalemate on the board (for eval function)
-            -- self:gameOver(newBoard, newBoard.turn)
+            self:gameOver(newBoard, newBoard.turn)
+
 
             -- recursively call minimax for player 1 (minimizing player)
             local value = self:minimax(newBoard, depth - 1, alpha, beta, false)
@@ -188,7 +237,8 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
             -- Alpha-Beta Pruning: Update alpha and check for cutoff
             alpha = math.max(alpha, bestValue) -- Alpha is the best score found so far for MAX player
             if beta <= alpha then -- If beta (opponent's best guaranteed score) is less than or equal to alpha (our best score), prune
-                print("ALPHA CUTOFF (MAX): Depth", depth, "Move:", move.startX, move.startY, "->", move.gridX, move.gridY, "Eval:", value)
+                --print("ALPHA CUTOFF (MAX): Depth", depth, "Move:", move.startX, move.startY, "->", move.gridX, move.gridY, "Eval:", value)
+                self.prunedBranches = self.prunedBranches + 1
                 break -- Prune this branch
             end
         end
@@ -211,8 +261,10 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
             -- make the move on the new board
             newBoard:makeMove(move)
 
+            newBoard.turn = (newBoard.turn == 'white' and 'black') or 'white'
+
             -- check end game conditions, sets checkmate or stalemate on the board (for eval function)
-            -- self:gameOver(newBoard, newBoard.turn)
+            self:gameOver(newBoard, newBoard.turn)
 
             -- recursively call minimax for the ai (maximizing player)
             local value = self:minimax(newBoard, depth - 1, alpha, beta, true)
@@ -226,7 +278,8 @@ function OnePlayerState:minimax(board, depth, alpha, beta, isMaximizingPlayer)
             -- Alpha-Beta Pruning: Update beta and check for cutoff
             beta = math.min(beta, bestValue) -- Beta is the best score found so far for MIN player
             if beta <= alpha then -- If beta (our best score) is less than or equal to alpha (opponent's best guaranteed score), prune
-                print("BETA CUTOFF (MIN): Depth", depth, "Move:", move.startX, move.startY, "->", move.gridX, move.gridY, "Eval:", value)
+                --print("BETA CUTOFF (MIN): Depth", depth, "Move:", move.startX, move.startY, "->", move.gridX, move.gridY, "Eval:", value)
+                self.prunedBranches = self.prunedBranches + 1
                 break -- Prune this branch
             end
         end

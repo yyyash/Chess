@@ -23,6 +23,7 @@ function PlayState:enter(params)
     self.button_margin = 5
 
     self.takenPieces = {}
+    self.prunedBranches = 0
 end
 
 function PlayState:render()
@@ -103,7 +104,7 @@ end
     legal means the move cannot put the current turn in check
     returns a table of legal moves
 ]]
-function PlayState:getLegalMoves(board, piece)
+--[[ function PlayState:getLegalMoves(board, piece)
     -- this gets all of the possible moves for the currently selected piece
     local moves = board:getMoves(piece)
     local legalMoves = {}
@@ -190,6 +191,107 @@ function PlayState:getLegalMoves(board, piece)
         end
     end
     -- done checking all of the current pieces moves, should be left with only legal moves now
+    return legalMoves
+end ]]
+
+--[[
+    mate in 1 bug fix
+]]
+function PlayState:getLegalMoves(board, piece)
+    -- This gets all of the possible (pseudo-legal) moves for the currently selected piece
+    local moves = board:getMoves(piece)
+    local legalMoves = {}
+    local opponentsColor = board:getOppColor(piece)
+
+    -- Save original piece position for reliably getting the piece from a cloned board.
+    -- We will need this to identify 'piece' on each 'tempBoard'.
+    local originalPieceX = piece.gridX
+    local originalPieceY = piece.gridY
+
+    for i = 1, #moves do
+        local currentMove = moves[i]
+
+        -- **CRITICAL FIX: Create a TEMPORARY board for EACH move simulation**
+        -- This ensures that modifications made for one simulated move do not affect
+        -- the original board or subsequent simulated moves within this loop.
+        local tempBoard = board:clone() -- ASSUMPTION: board:clone() performs a deep copy
+
+        -- Get the specific piece that we are simulating the move for from the cloned board.
+        -- We must operate on this 'tempPiece' instance, not the original 'piece' object.
+        local tempPiece = tempBoard:getPieceAt(originalPieceX, originalPieceY)
+
+        -- Safety check: If the piece wasn't found on the tempBoard (e.g., clone issue), skip this move.
+        if not tempPiece then
+            -- You might want to log a warning here during development:
+            print("DEBUG: Piece (", originalPieceX, ",", originalPieceY, ") not found on cloned board!")
+            goto next_move_iteration
+        end
+
+        -- Handle potential captures on the tempBoard:
+        -- Check if there is an enemy piece at the destination square on the tempBoard.
+        local capturedPiece = tempBoard:getPieceAt(currentMove.gridX, currentMove.gridY)
+        if capturedPiece and capturedPiece.color == opponentsColor then
+            -- ASSUMPTION: tempBoard:removePiece() effectively removes the piece from tempBoard.pieces
+            -- You might need to implement tempBoard:removePiece(pieceObject) or tempBoard:removePieceAt(x, y)
+            tempBoard:takePiece(capturedPiece.gridX, capturedPiece.gridY)
+        end
+
+        -- "Fake-move" the selected piece on the TEMPORARY board
+        tempPiece.gridX = currentMove.gridX
+        tempPiece.gridY = currentMove.gridY
+
+        -- Get all pseudo-legal moves for the opponent on this *temporary* board state.
+        -- ASSUMPTION: tempBoard:getAllMoves() returns ONLY pseudo-legal moves
+        -- (i.e., it doesn't recursively call getLegalMoves/getAllLegalMoves).
+        local opponentsPseudoMovesOnTempBoard = tempBoard:getAllMoves(opponentsColor)
+
+        -- --- King Safety Check (for the current player's king) ---
+        -- After making the move, check if the current player's king is in check on this tempBoard.
+        -- ASSUMPTION: board:getCheck(kingColor, opponentMovesList) returns TRUE if the king is in check.
+        local isMoveLegal = true
+        if tempBoard:getCheck(tempPiece.color, opponentsPseudoMovesOnTempBoard) then
+            isMoveLegal = false -- This move puts or leaves our king in check, so it's illegal.
+        end
+
+        -- --- Castling Specific Checks (Integrate correctly and robustly) ---
+        -- These checks are applied *in addition* to the general king safety check above.
+        -- A king cannot castle if it's currently in check, moves through an attacked square,
+        -- or lands on an attacked square.
+        if isMoveLegal and (currentMove.castleRight or currentMove.castleLeft) then
+            -- `getCheck` should be able to check if a *specific square* (not just the king's location) is attacked.
+            -- This means your `board:getCheck` might need an overload or optional parameters (e.g., `checkX`, `checkY`).
+
+            if currentMove.castleRight then -- Kingside castling
+                -- Check the square the king passes through (f1 for White, f8 for Black)
+                if tempBoard:getCheck(tempPiece.color, opponentsPseudoMovesOnTempBoard, originalPieceX + 1, originalPieceY) then
+                    isMoveLegal = false
+                end
+                -- Check the square the king lands on (g1 for White, g8 for Black)
+                if isMoveLegal and tempBoard:getCheck(tempPiece.color, opponentsPseudoMovesOnTempBoard, originalPieceX + 2, originalPieceY) then
+                    isMoveLegal = false
+                end
+            elseif currentMove.castleLeft then -- Queenside castling
+                -- Check squares the king passes through (d1/d8 and c1/c8)
+                if tempBoard:getCheck(tempPiece.color, opponentsPseudoMovesOnTempBoard, originalPieceX - 1, originalPieceY) or
+                   tempBoard:getCheck(tempPiece.color, opponentsPseudoMovesOnTempBoard, originalPieceX - 2, originalPieceY) then
+                    isMoveLegal = false
+                end
+                -- Note: The king lands on C-file (gridX - 2), so it's covered by the second check above.
+                -- If you check a square that is *not* one of those two, add it explicitly.
+            end
+        end
+
+        -- If all checks pass for this move, it is truly legal.
+        if isMoveLegal then
+            table.insert(legalMoves, currentMove)
+        end
+
+        ::next_move_iteration:: -- Lua label to jump to the next iteration of the for loop
+        -- No need for manual board state resets (piece.gridX, piece.gridY, reinserting tempPiece)
+        -- because 'tempBoard' and 'tempPiece' are local and will be garbage collected
+        -- at the end of this loop iteration, leaving the original 'board' untouched.
+    end
+
     return legalMoves
 end
 

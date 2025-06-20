@@ -32,6 +32,7 @@ function Board:init(p1_color, is_cloning)
                 table.insert(self.pieces, Piece(i, 7, 'white', 'pawn', WHITE_PAWN, 1))     
             end
 
+
             -- white rooks
             table.insert(self.pieces, Piece(1, 8, 'white', 'rook', WHITE_ROOK, 1))
             table.insert(self.pieces, Piece(8, 8, 'white', 'rook', WHITE_ROOK, 1))
@@ -75,6 +76,46 @@ function Board:init(p1_color, is_cloning)
 
         -- player 1 is black
         elseif p1_color == 'black' then
+            
+            --[[ -- DEBUG POSITION
+            
+            -- black pawns
+            table.insert(self.pieces, Piece(2, 6, 'black', 'pawn', BLACK_PAWN, 1))
+            table.insert(self.pieces, Piece(3, 7, 'black', 'pawn', BLACK_PAWN, 1))
+            table.insert(self.pieces, Piece(5, 4, 'black', 'pawn', BLACK_PAWN, 1))
+            table.insert(self.pieces, Piece(6, 7, 'black', 'pawn', BLACK_PAWN, 1))
+            table.insert(self.pieces, Piece(7, 7, 'black', 'pawn', BLACK_PAWN, 1))
+
+            -- black bishops
+            table.insert(self.pieces, Piece(5, 8, 'black', 'bishop', BLACK_BISHOP, 1))
+            table.insert(self.pieces, Piece(8, 4, 'black', 'bishop', BLACK_BISHOP, 1))
+
+            -- black rook
+            table.insert(self.pieces, Piece(4, 3, 'black', 'rook', BLACK_ROOK, 1))
+
+            -- black queen
+            table.insert(self.pieces, Piece(5, 3, 'black', 'queen', BLACK_QUEEN, 1))
+
+            -- black king
+            table.insert(self.pieces, Piece(2, 8, 'black', 'king', BLACK_KING, 1))
+
+            -- white pawns
+            table.insert(self.pieces, Piece(1, 3, 'white', 'pawn', WHITE_PAWN, 2))
+            table.insert(self.pieces, Piece(3, 4, 'white', 'pawn', WHITE_PAWN, 2))
+            table.insert(self.pieces, Piece(8, 3, 'white', 'pawn', WHITE_PAWN, 2))
+
+            -- white bishop
+            table.insert(self.pieces, Piece(7, 2, 'white', 'bishop', WHITE_BISHOP, 2))
+
+            -- white rook
+            table.insert(self.pieces, Piece(8, 1, 'white', 'rook', WHITE_ROOK, 2))
+
+            -- white queen
+            table.insert(self.pieces, Piece(6, 2, 'white', 'queen', WHITE_QUEEN, 2))
+
+            -- white king
+            table.insert(self.pieces, Piece(7, 1, 'white', 'king', WHITE_KING, 2)) ]]
+            
 
             -- black pawns
             for i = 1, 8 do
@@ -230,13 +271,10 @@ end
     look for check
     returns true if player is in check
 ]]
-function Board:getCheck(color, moves)
+--[[ function Board:getCheck(color, moves)
     -- for all moves in the moves table
     -- check if the king has the same gridX and gridY as a move from the move table
     local kingX, kingY = self:getKingPos(color)
-
-    --[[ --debug
-    print(color .. ' king pos = ' .. kingX .. ', ' .. kingY) ]]
 
     if moves ~= nil then
         for i = 1, #moves do
@@ -246,6 +284,43 @@ function Board:getCheck(color, moves)
         end
     end
     return false
+end ]]
+
+--[[
+    improved version that takes in optional parameters for targetX, targetY
+    if no params, set targetX/Y to the kings position
+]]
+function Board:getCheck(color, moves, targetX, targetY)
+    -- If targetX and targetY are provided, use them for the check.
+    -- Otherwise, default to the king's position for the given color.
+    local checkX
+    local checkY
+
+    if targetX ~= nil and targetY ~= nil then
+        checkX = targetX
+        checkY = targetY
+    else
+        -- Get the king's position for the given 'color'
+        local kingX, kingY = self:getKingPos(color)
+        checkX = kingX
+        checkY = kingY
+    end
+
+    --[[ --debug
+    print(color .. ' checking pos = ' .. checkX .. ', ' .. checkY) ]]
+
+    -- Check if 'moves' is valid (not nil and a table)
+    if moves ~= nil and type(moves) == 'table' then
+        -- For all moves in the 'moves' table (these are opponent's pseudo-legal moves)
+        -- check if any of them land on the target square (checkX, checkY).
+        for i = 1, #moves do
+            if moves[i]['gridX'] == checkX and moves[i]['gridY'] == checkY then
+                return true -- The target square is attacked!
+            end
+        end
+    end
+
+    return false -- The target square is not attacked by any of the provided moves.
 end
 
 --[[
@@ -811,8 +886,7 @@ function Board:makeMove(move)
         end
     end
 
-    -- sets check if move put opponent in check
-    -- resets check if move protected the king
+    --[[ -- sets check if move put opponent in check
     local all_moves = self:getAllMoves(piece_to_move.color)
     -- look for check on the opposing player and set check on the opposing king
     if self:getCheck(self:getOppColor(piece_to_move), all_moves) then
@@ -833,11 +907,8 @@ function Board:makeMove(move)
     end
 
     -- change self.turn
+     ]]
     self.turn = (self.turn == 'white' and 'black') or 'white'
-
-    self.moveCount = self.moveCount + 1
-    print(self.moveCount .. ' moves have been made')
-
 
     return taken_pieces
 end
