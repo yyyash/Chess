@@ -1119,7 +1119,7 @@ function Board:eval()
             knight = 3.2,
             bishop = 3.3,
             rook = 5.3,
-            queen = 9,
+            queen = 0,
             king = 0
         }
     end

@@ -28,7 +28,7 @@ function OnePlayerState:update(dt)
             print('best move was ' .. bestMove['gridX'] .. ' , ' .. bestMove['gridY'])
 
             -- check game over conditions
-            self.gameOverType = self:gameOver(self.board, self:getOppTurn())
+            self.gameOverType = self:gameOver(self.board, self.board.turn)
             -- look for gameover
             if self.gameOverType == 'checkmate' then
                 gStateMachine:change('game_over', { board = self.board, gameOverType = self.gameOverType, winner = self.turn, buttons = self.buttons})
@@ -91,7 +91,7 @@ function OnePlayerState:update(dt)
                     TableConcat(self.takenPieces, self.board:makeMove(self.legalMoves[self.moveIndex]))
 
                     -- check game over conditions
-                    self.gameOverType = self:gameOver(self.board, self:getOppTurn())
+                    self.gameOverType = self:gameOver(self.board, self.board.turn)
                     -- look for gameover
                     if self.gameOverType == 'checkmate' then
                         gStateMachine:change('game_over', { board = self.board, gameOverType = self.gameOverType, winner = self.turn, buttons = self.buttons})
